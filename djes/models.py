@@ -17,31 +17,35 @@ def get_base_class(cls):
     return cls
 
 
-def get_doctype(model):
-    if hasattr(model.ElasticSearch, "doc_type"):
-        return model.ElasticSearch.doc_type
-    return "%s_%s" % (model._meta.app_label, model._meta.model_name)
+class ElasticsearchMeta(object):
 
+    def __init__(self, model):
+        self.model = model
 
-def get_mapping_object(klass):
-
-    mapping = Mapping(get_doctype(klass))
-
-    for field, model in klass._meta.get_fields_with_model():
-        field_args = FIELD_MAPPINGS.get(field.get_internal_type())
-        if field_args:
-            # Do something
-            mapping.field(field.name, field_args)
-
-    mapping.properties._params["_id"] = {"path": klass._meta.pk.name}
-
-    return mapping
+    def get_object(self):
+        pass
 
 
 class IndexableManager(models.Manager):
 
+    def get_doctype(self):
+        if hasattr(self.model.ElasticSearch, "doc_type"):
+            return self.model.ElasticSearch.doc_type
+        return "%s_%s" % (self.model._meta.app_label, self.model._meta.model_name)
+
     def get_mapping(self):
-        return get_mapping_object(self.model)
+        mapping = Mapping(self.get_doctype())
+
+        for field, model in self.model._meta.get_fields_with_model():
+            field_args = FIELD_MAPPINGS.get(field.get_internal_type())
+            if field_args:
+                # Do something
+                mapping.field(field.name, field_args)
+
+        mapping.properties._params["_id"] = {"path": self.model._meta.pk.name}
+
+        return mapping
+
 
 
 class Indexable(models.Model):

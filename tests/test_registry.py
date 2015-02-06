@@ -4,4 +4,4 @@ from example.app.models import SimpleObject
 
 
 def test_simple():
-    assert indexable_registry.all_models == {"app_simpleobject": SimpleObject}
+    assert indexable_registry.all_models.get("app_simpleobject") == SimpleObject

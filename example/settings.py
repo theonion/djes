@@ -1,7 +1,7 @@
 
 
 INSTALLED_APPS = (
-	"djes",
+    "djes",
     "example.app",
 )
 

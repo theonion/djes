@@ -1,6 +1,12 @@
 from django.apps import AppConfig
 
-from .models import Indexable, get_doctype, get_base_class
+from .models import Indexable
+
+
+def get_base_class(cls):
+    while cls.__bases__[0] != Indexable:
+        cls = cls.__bases__[0]
+    return cls
 
 
 class IndexableRegistry(object):
@@ -11,7 +17,7 @@ class IndexableRegistry(object):
 
     def register(self, klass):
         """Adds a new PolymorphicIndexable to the registry."""
-        doc_type = get_doctype(klass)
+        doc_type = klass.search_objects.get_doctype()
 
         self.all_models[doc_type] = klass
         base_class = get_base_class(klass)
