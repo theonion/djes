@@ -1,0 +1,10 @@
+{
+    "settings": {
+        "python_interpreter_path": "./bin/activate",
+ 
+        "python_package_paths": [
+            // My virtualenv python project location
+            "./lib/python2.7/site-packages/",
+        ]
+    }
+}
