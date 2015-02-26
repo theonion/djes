@@ -30,6 +30,6 @@ class RelatedNestedObject(Indexable):
 
 class RelatableObject(Indexable):
 
-    name = models.CharField()
+    name = models.CharField(max_length=255)
     simple = models.ForeignKey(RelatedSimpleObject)
     nested = models.ForeignKey(RelatedNestedObject)

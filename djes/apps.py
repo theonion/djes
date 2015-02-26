@@ -1,10 +1,13 @@
 from django.apps import AppConfig
 
 from .models import Indexable
+from .conf import settings
+
+from elasticsearch_dsl.connections import connections
 
 
 def get_base_class(cls):
-    while cls.__bases__[0] != Indexable:
+    while cls.__bases__ and cls.__bases__[0] != Indexable:
         cls = cls.__bases__[0]
     return cls
 
@@ -47,3 +50,5 @@ class DJESConfig(AppConfig):
                     indexable_registry.register(subclass)
                 register_subclasses(subclass)
         register_subclasses(Indexable)
+
+    connections.configure(**settings.ES_CONNECTIONS)
