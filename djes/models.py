@@ -130,5 +130,12 @@ class Indexable(models.Model):
         out = {}
         for key in type(self).search_objects.get_mapping().properties.properties:
             # TODO: What if we've mapped the property to a different name?
-            out[key] = getattr(self, key)
+
+            attribute = getattr(self, key)
+            if callable(attribute):
+                out[key] = attribute()
+            elif isinstance(attribute, Indexable):
+                out[key] = attribute.to_dict()
+            else:
+                out[key] = attribute
         return out
