@@ -103,6 +103,16 @@ class IndexableManager(models.Manager):
 
         # iterate and add parent values to the mapping
         for field, model in self.model._meta.get_fields_with_model():
+
+            # this is used in a couple ways, so let's fetch it at the top of the loop
+            db_column, attname = field.get_attname_column()
+
+            # check for manual mappings
+            manual_field_mapping = getattr(self.model.Elasticsearch, attname, None)
+            if manual_field_mapping:
+                mapping.field(db_column, manual_field_mapping)
+                continue
+
             # related check
             if isinstance(field, models.ForeignKey):
                 # This is a related field, so it should maybe be nested?
@@ -115,8 +125,6 @@ class IndexableManager(models.Manager):
 
             field_args = FIELD_MAPPINGS.get(field.get_internal_type())
             if field_args:
-                # Do something
-                db_column, attname = field.get_attname_column()
                 mapping.field(db_column or attname, field_args)
             else:
                 raise Exception("Can't find {}".format(field.get_internal_type()))

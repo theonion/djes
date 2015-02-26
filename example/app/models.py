@@ -2,6 +2,8 @@ from django.db import models
 
 from djes.models import Indexable
 
+from elasticsearch_dsl import field
+
 
 class SimpleObject(Indexable):
 
@@ -16,6 +18,8 @@ class ManualMappingObject(SimpleObject):
 
     class Elasticsearch:
         doc_type = "super_manual_mapping"
+
+        bar = field.String(fields={"raw": field.String(index="not_analyzed")})
 
 
 class RelatedSimpleObject(models.Model):
