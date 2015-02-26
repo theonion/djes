@@ -117,9 +117,6 @@ class Indexable(models.Model):
     class Meta:
         abstract = True
 
-    # def save(self):
-    #     super(Indexable, self).save()
-
     objects = models.Manager()
     search_objects = IndexableManager()
 
@@ -129,7 +126,7 @@ class Indexable(models.Model):
     def to_dict(self):
         out = {}
         for key in type(self).search_objects.get_mapping().properties.properties:
-            # TODO: What if we've mapped the property to a different name?
+            # TODO: What if we've mapped the property to a different name? Will we allow that?
 
             attribute = getattr(self, key)
             if callable(attribute):
