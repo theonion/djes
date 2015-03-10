@@ -36,6 +36,13 @@ class DjangoMapping(Mapping):
         parent_pointer_fields = self.model._meta.parents.values()
 
         for field, model in self.model._meta.get_fields_with_model():
+            db_column, attname = field.get_attname_column()
+
+            manual_field_mapping = getattr(self, attname, None)
+            if manual_field_mapping:
+                self.field(db_column, manual_field_mapping)
+                continue
+
             if isinstance(field, models.ForeignKey):
                 # This is a related field, so it should maybe be nested?
 
@@ -48,7 +55,6 @@ class DjangoMapping(Mapping):
             field_args = FIELD_MAPPINGS.get(field.get_internal_type())
             if field_args:
                 # Do something
-                db_column, attname = field.get_attname_column()
                 self.field(db_column or attname, field_args)
             else:
                 raise Exception("Can't find {}".format(field.get_internal_type()))

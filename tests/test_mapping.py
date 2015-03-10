@@ -30,7 +30,12 @@ def test_manual():
             "properties": {
                 "foo": {"type": "long"},
                 "id": {"type": "long"},
-                "bar": {"type": "string"},
+                "bar": {
+                    "type": "string",
+                    "fields": {
+                        "raw": {"type": "string", "index": "not_analyzed"}
+                    }
+                },
                 "baz": {"index": "not_analyzed", "type": "string"},
                 "qux": {"type": "string"},
                 "simpleobject_ptr_id": {"type": "long"},
