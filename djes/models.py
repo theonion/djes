@@ -93,7 +93,11 @@ class IndexableManager(models.Manager):
         :return: the mapping for the elasticsearch doc type
         :rtype: elasticsearch_dsl.mapping.Mapping
         """
-        mapping_klass = getattr(self.model, "mapping", DjangoMapping)
+        if hasattr(self.model, "Mapping"):
+            # The user has defined a manual mapping
+            mapping_klass = type("Mapping", (DjangoMapping, self.model.Mapping), {})
+        else:
+            mapping_klass = DjangoMapping
 
         return mapping_klass(self.model)
 
@@ -159,8 +163,6 @@ class Indexable(models.Model):
 
     objects = models.Manager()
     search_objects = IndexableManager()
-
-    mapping = DjangoMapping
 
     def to_dict(self):
         """converts the django model's fields to an elasticsearch mapping

@@ -1,7 +1,6 @@
 from django.db import models
 
 from djes.models import Indexable
-from djes.mapping import DjangoMapping
 
 from elasticsearch_dsl import field
 
@@ -13,18 +12,15 @@ class SimpleObject(Indexable):
     baz = models.SlugField()
 
 
-class ManualMapping(DjangoMapping):
-    class Meta:
-        doc_type = "super_manual_mapping"
-
-    bar = field.String(fields={"raw": field.String(index="not_analyzed")})
-
-
 class ManualMappingObject(SimpleObject):
 
     qux = models.URLField()
 
-    mapping = ManualMapping
+    class Mapping:
+        class Meta:
+            doc_type = "super_manual_mapping"
+
+        bar = field.String(fields={"raw": field.String(index="not_analyzed")})
 
 
 class RelatedSimpleObject(models.Model):
