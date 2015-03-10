@@ -7,6 +7,7 @@ from elasticsearch_dsl.mapping import Mapping
 from elasticsearch_dsl.connections import connections
 
 from .conf import settings
+from .mapping import DjangoMapping
 
 FIELD_MAPPINGS = {
     "AutoField": {"type": "long"},
@@ -50,16 +51,24 @@ def get_base_class(cls):
 class IndexableManager(models.Manager):
 
     def get_doctype(self):
-        if hasattr(self.model.Elasticsearch, "doc_type"):
-            return self.model.Elasticsearch.doc_type
+        return self.get_mapping().doc_type
+        
+        if hasattr(self.model.Mapping, "doc_type"):
+            return self.model.Mapping.doc_type
         return "%s_%s" % (self.model._meta.app_label, self.model._meta.model_name)
 
     def get_index(self):
-        if hasattr(self.model.Elasticsearch, "index"):
-            return self.model.Elasticsearch.index
+        # return self.get_mapping().doc_type
+
+        # if hasattr(self.model.Mapping, "index"):
+        #     return self.model.Mapping.index
         return settings.ES_INDEX
 
     def get_mapping(self):
+        mapping_klass = getattr(self.model, "mapping", DjangoMapping)
+
+        return mapping_klass(self.model)
+
         mapping = Mapping(self.get_doctype())
 
         parent_pointer_fields = self.model._meta.parents.values()
@@ -120,8 +129,7 @@ class Indexable(models.Model):
     objects = models.Manager()
     search_objects = IndexableManager()
 
-    class Elasticsearch:
-        pass
+    mapping = DjangoMapping
 
     def to_dict(self):
         out = {}
