@@ -18,7 +18,8 @@ FIELD_MAPPINGS = {
     "CharField": {"type": "string"},
     "TextField": {"type": "string"},
     "SlugField": {"type": "string", "index": "not_analyzed"},
-    "ForeignKey": {"type": "long"}
+    "ForeignKey": {"type": "long"},
+    "BigIntegerField": {"type": "long"}
 }
 
 
@@ -53,31 +54,10 @@ def shallow_class_factory(model):
         return type(str(name), (model,), overrides)
 
 
-def get_base_class(cls):
-    """finds the absolute base
-
-    :param cls: the class instance
-    :type cls: object
-
-    :return: the base class
-    :rtype: type
-    """
-    while cls.__bases__[0] != Indexable:
-        cls = cls.__bases__[0]
-    return cls
-
 
 class IndexableManager(models.Manager):
     """a custom manager class to handle integration of native django models and elasticsearch storage
     """
-
-    def get_doctype(self):
-        """gets the name of the elasticsearch doc type
-
-        :return: the name of the elasticsearch doc type
-        :rtype: str
-        """
-        return self.get_mapping().doc_type
 
     def get_index(self):
         """gets the name of the elasticsearch index
@@ -93,13 +73,8 @@ class IndexableManager(models.Manager):
         :return: the mapping for the elasticsearch doc type
         :rtype: elasticsearch_dsl.mapping.Mapping
         """
-        if hasattr(self.model, "Mapping"):
-            # The user has defined a manual mapping
-            mapping_klass = type("Mapping", (DjangoMapping, self.model.Mapping), {})
-        else:
-            mapping_klass = DjangoMapping
 
-        return mapping_klass(self.model)
+        return self.model.mapping
 
     def get(self, using=None, index=None, *args, **kwargs):
         """gets a specific document from elasticsearch
@@ -171,7 +146,7 @@ class Indexable(models.Model):
         :rtype: elasticsearch_dsl.mapping.Mapping
         """
         out = {}
-        for key in type(self).search_objects.get_mapping().properties.properties:
+        for key in self.mapping.properties.properties:
             # TODO: What if we've mapped the property to a different name? Will we allow that?
 
             attribute = getattr(self, key)

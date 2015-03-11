@@ -24,13 +24,17 @@ class DjangoMapping(Mapping):
 
         self.model = model
         # todo: Check for Meta override?
-        if hasattr(self, "Meta") and self.Meta.doc_type:
+        if hasattr(self, "Meta") and hasattr(self.Meta, "doc_type"):
             name = self.Meta.doc_type
         else:
             name = "{}_{}".format(self.model._meta.app_label, self.model._meta.model_name)
         
         super(DjangoMapping, self).__init__(name)
         self._meta = {}
+
+        excludes = []
+        if hasattr(self, "Meta") and hasattr(self.Meta, "excludes"):
+            excludes = self.Meta.excludes
 
         # Now we add all the Django fields
         parent_pointer_fields = self.model._meta.parents.values()
@@ -41,6 +45,10 @@ class DjangoMapping(Mapping):
             manual_field_mapping = getattr(self, attname, None)
             if manual_field_mapping:
                 self.field(db_column, manual_field_mapping)
+                continue
+
+            # Checking to make sure this field hasn't been excluded
+            if attname in excludes:
                 continue
 
             if isinstance(field, models.ForeignKey):

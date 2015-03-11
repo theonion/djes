@@ -15,10 +15,12 @@ class SimpleObject(Indexable):
 class ManualMappingObject(SimpleObject):
 
     qux = models.URLField()
+    garbage = models.IntegerField()
 
     class Mapping:
         class Meta:
             doc_type = "super_manual_mapping"
+            excludes = ("garbage",)
 
         bar = field.String(fields={"raw": field.String(index="not_analyzed")})
 
