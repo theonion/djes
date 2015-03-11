@@ -17,3 +17,10 @@ MIDDLEWARE_CLASSES = (
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware"
 )
+
+ES_INDEX = "djes-example"
+ES_INDEX_SETTINGS = {
+	"djes-example": {
+		"number_of_replicas" : 2
+	}
+}

@@ -26,6 +26,7 @@ class IndexableRegistry(object):
     def __init__(self):
         self.all_models = {}
         self.families = {}
+        self.indexes = {}
 
     def register(self, klass):
         """Adds a new PolymorphicIndexable to the registry."""
@@ -47,6 +48,12 @@ class IndexableRegistry(object):
         if base_class not in self.families:
             self.families[base_class] = {}
         self.families[base_class][doc_type] = klass
+
+        if klass.mapping.index not in self.indexes:
+            self.indexes[klass.mapping.index] = []
+
+        self.indexes[klass.mapping.index].append(klass)
+
 
 
     def get_doctypes(self, klass):
