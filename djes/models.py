@@ -10,19 +10,6 @@ from .conf import settings
 from .mapping import DjangoMapping
 
 
-# todo: expand this for all django field types
-FIELD_MAPPINGS = {
-    "AutoField": {"type": "long"},
-    "OneToOneField": {"type": "long"},
-    "IntegerField": {"type": "long"},
-    "CharField": {"type": "string"},
-    "TextField": {"type": "string"},
-    "SlugField": {"type": "string", "index": "not_analyzed"},
-    "ForeignKey": {"type": "long"},
-    "BigIntegerField": {"type": "long"}
-}
-
-
 def shallow_class_factory(model):
     """finds the class for a given model
 
@@ -59,31 +46,8 @@ class IndexableManager(models.Manager):
     """a custom manager class to handle integration of native django models and elasticsearch storage
     """
 
-    def get_index(self):
-        """gets the name of the elasticsearch index
-
-        :return: the name of the elasticsearch index
-        :rtype: str
-        """
-        return settings.ES_INDEX
-
-    def get_mapping(self):
-        """creates the mapping for the elasticsearch doc type
-
-        :return: the mapping for the elasticsearch doc type
-        :rtype: elasticsearch_dsl.mapping.Mapping
-        """
-
-        return self.model.mapping
-
-    def get(self, using=None, index=None, *args, **kwargs):
+    def get(self, *args, **kwargs):
         """gets a specific document from elasticsearch
-
-        :param using: an elasticsearch connection
-        :type using: elasticsearch.Elasticsearch
-
-        :param index: the name of the index to search
-        :type index: str
 
         :return: the result of the search
         :rtype: dict
@@ -106,8 +70,8 @@ class IndexableManager(models.Manager):
         # connect to es and retrieve the document
         es = connections.get_connection(using or "default")
         doc = es.get(
-            index=index or self.get_index(),
-            doc_type=self.get_doctype(),
+            index=self.model.mapping.index,
+            doc_type=self.model.doc_type,
             id=id,
             **kwargs
         )

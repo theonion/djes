@@ -1,8 +1,9 @@
 from django.db import models
-
 from elasticsearch_dsl.mapping import Mapping, Properties
 
+from djes.conf import settings
 
+# TODO: expand this for all django field types
 FIELD_MAPPINGS = {
     "AutoField": {"type": "long"},
     "OneToOneField": {"type": "long"},
@@ -14,6 +15,10 @@ FIELD_MAPPINGS = {
 }
 
 
+class EmptyMeta(object):
+    pass
+
+
 class DjangoMapping(Mapping):
     """A subclass of the elasticsearch_dsl Mapping, allowing the automatic mapping
     of many fields on the model, while letting the developer override these settings"""
@@ -23,11 +28,11 @@ class DjangoMapping(Mapping):
         from .models import Indexable
 
         self.model = model
-        # todo: Check for Meta override?
-        if hasattr(self, "Meta") and hasattr(self.Meta, "doc_type"):
-            name = self.Meta.doc_type
-        else:
-            name = "{}_{}".format(self.model._meta.app_label, self.model._meta.model_name)
+        if not hasattr(self, "Meta"):
+            self.Meta = EmptyMeta
+
+        default_name = "{}_{}".format(self.model._meta.app_label, self.model._meta.model_name)
+        name = getattr(self.Meta, "doc_type", default_name)
         
         super(DjangoMapping, self).__init__(name)
         self._meta = {}
@@ -56,7 +61,7 @@ class DjangoMapping(Mapping):
 
                 # We only want to nest fields when they are indexable, and not parent pointers.
                 if issubclass(field.rel.to, Indexable) and field not in parent_pointer_fields:
-                    related_properties = field.rel.to.search_objects.get_mapping().properties.properties.to_dict()
+                    related_properties = field.rel.to.mapping.properties.properties.to_dict()
                     self.field(field.name, {"type": "object", "properties": related_properties})
                     continue
 
@@ -65,6 +70,10 @@ class DjangoMapping(Mapping):
                 # Do something
                 self.field(db_column or attname, field_args)
             else:
-                raise Exception("Can't find {}".format(field.get_internal_type()))
+                raise Warning("Can't find {}".format(field.get_internal_type()))
 
         self.properties._params["_id"] = {"path": self.model._meta.pk.name}
+
+    @property
+    def index(self):
+        return getattr(self.Meta, "index", settings.ES_INDEX)

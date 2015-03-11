@@ -2,9 +2,8 @@ from example.app.models import SimpleObject, ManualMappingObject, RelatableObjec
 
 
 def test_simple():
-    mapping = SimpleObject.search_objects.get_mapping()
-    assert mapping.doc_type == "app_simpleobject"
-    assert mapping.to_dict() == {
+    assert SimpleObject.mapping.doc_type == "app_simpleobject"
+    assert SimpleObject.mapping.to_dict() == {
         "app_simpleobject": {
             "_id": {
                 "path": "id"
@@ -20,9 +19,9 @@ def test_simple():
 
 
 def test_manual():
-    mapping = ManualMappingObject.search_objects.get_mapping()
-    assert mapping.doc_type == "super_manual_mapping"
-    assert mapping.to_dict() == {
+    assert ManualMappingObject.mapping.doc_type == "super_manual_mapping"
+    assert ManualMappingObject.mapping.index == "butts"
+    assert ManualMappingObject.mapping.to_dict() == {
         "super_manual_mapping": {
             "_id": {
                 "path": "simpleobject_ptr"
@@ -45,8 +44,7 @@ def test_manual():
 
 
 def test_related():
-    mapping = RelatableObject.search_objects.get_mapping()
-    assert mapping.to_dict() == {
+    assert RelatableObject.mapping.to_dict() == {
         "app_relatableobject": {
             "_id": {
                 "path": "id"
