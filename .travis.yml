@@ -4,7 +4,8 @@ python:
 services:
   - elasticsearch
 install:
-  - pip install -r requirements-dev.txt
+  - travis_retry pip install -e .
+  - travis_retry pip install file://$(pwd)#egg=betty-cropper[dev]
 script:
   - py.test tests/
 sudo: false

@@ -4,6 +4,7 @@
 
 ```
     $ virtualenv . && source ./bin/activate  # Or not
-    $ pip install -r requirements-dev.txt
+    $ pip install -e .
+    $ pip install file://$(pwd)#egg=betty-cropper[dev]
     $ py.test tests/
 ```
