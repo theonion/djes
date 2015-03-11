@@ -36,8 +36,6 @@ def build_versioned_index(name, version=1, body=None, old_version=None):
 
     es.indices.update_aliases(body={"actions": actions})
 
-    # es.indices.put_alias(index=versioned_index_name, name=name)
-
 
 def sync_index(name, body):
     es = connections.get_connection("default")
