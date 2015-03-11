@@ -29,10 +29,10 @@ def build_versioned_index(name, version=1, body=None, old_version=None):
 
     # TODO: bulk index in here...
 
-    actions = [{ "add" : { "index" : versioned_index_name, "alias" : name }}]
+    actions = [{"add": {"index": versioned_index_name, "alias": name}}]
     if old_version is not None:
         old_versioned_index_name = "{0}_{1:0>4}".format(name, old_version)
-        actions.insert(0, { "remove" : { "index" : old_versioned_index_name, "alias" : name }})
+        actions.insert(0, {"remove": {"index": old_versioned_index_name, "alias": name}})
 
     es.indices.update_aliases(body={"actions": actions})
 
@@ -58,14 +58,13 @@ def sync_index(name, body):
             # We need to update the settings...
             es.indices.put_settings(index=versioned_index_name, body=body["settings"])
 
-
     server_mappings = es.indices.get_mapping(index=versioned_index_name)[versioned_index_name]["mappings"]
 
     for doc_type, mapping_body in body["mappings"].items():
         if mapping_body != server_mappings.get(doc_type, {}):
             try:
                 es.indices.put_mapping(index=versioned_index_name, doc_type=doc_type, body=mapping_body)
-            except TransportError, e:
+            except TransportError as e:
                 if "MergeMappingException" in e.error:
                     # We need to do this the hard way
                     old_version = int(versioned_index_name.split("_")[-1])
@@ -81,10 +80,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        es = connections.get_connection("default")
         indexes = get_indexes()
 
         for index, body in indexes.items():
             sync_index(index, body)
-
-

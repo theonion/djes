@@ -1,13 +1,8 @@
 from django.apps import apps
 from django.db import models
 from django.db.backends import utils
-from django.db.models.fields.related import RelatedField
 
-from elasticsearch_dsl.mapping import Mapping
 from elasticsearch_dsl.connections import connections
-
-from .conf import settings
-from .mapping import DjangoMapping
 
 
 def shallow_class_factory(model):

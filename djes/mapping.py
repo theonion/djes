@@ -1,5 +1,5 @@
 from django.db import models
-from elasticsearch_dsl.mapping import Mapping, Properties
+from elasticsearch_dsl.mapping import Mapping
 
 from djes.conf import settings
 
@@ -33,7 +33,7 @@ class DjangoMapping(Mapping):
 
         default_name = "{}_{}".format(self.model._meta.app_label, self.model._meta.model_name)
         name = getattr(self.Meta, "doc_type", default_name)
-        
+
         super(DjangoMapping, self).__init__(name)
         self._meta = {}
 

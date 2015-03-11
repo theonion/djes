@@ -21,7 +21,8 @@ setup_requires = []
 dev_requires = [
     "flake8>=2.0,<2.1",
     "pytest==2.6.4",
-    "pytest-django==2.8.0"
+    "pytest-django==2.8.0",
+    "pytest-cov==1.8.1",
 ]
 
 install_requires = [
