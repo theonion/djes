@@ -21,6 +21,6 @@ MIDDLEWARE_CLASSES = (
 ES_INDEX = "djes-example"
 ES_INDEX_SETTINGS = {
 	"djes-example": {
-		"number_of_replicas" : 2
+		"index": {"number_of_replicas": "1"}
 	}
 }
