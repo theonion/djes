@@ -49,7 +49,7 @@ def sync_index(name, body):
     alias = es.indices.get_alias(name=name)
 
     # There will only be one key, let's the name from it
-    versioned_index_name = alias.keys()[0]
+    versioned_index_name = list(alias)[0]
     if "settings" in body:
         settings = es.indices.get_settings(index=versioned_index_name)[versioned_index_name]["settings"]
 
