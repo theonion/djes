@@ -38,4 +38,3 @@ def test_relatable():
             "denormalized_datums": "Some denormalized datums"
         }
     }
-

@@ -4,6 +4,7 @@ from elasticsearch_dsl.connections import connections
 
 from djes.apps import indexable_registry
 from djes.conf import settings
+from djes.management.commands.bulk_index import bulk_index
 
 
 def get_indexes():
@@ -27,13 +28,14 @@ def build_versioned_index(name, version=1, body=None, old_version=None):
     versioned_index_name = "{0}_{1:0>4}".format(name, version)
     es.indices.create(index=versioned_index_name, body=body)
 
-    # TODO: bulk index in here...
+    bulk_index(es, index=name, version=version)  # Bulk index here...
 
     actions = [{"add": {"index": versioned_index_name, "alias": name}}]
     if old_version is not None:
         old_versioned_index_name = "{0}_{1:0>4}".format(name, old_version)
         actions.insert(0, {"remove": {"index": old_versioned_index_name, "alias": name}})
 
+    print(actions)
     es.indices.update_aliases(body={"actions": actions})
 
 
@@ -41,7 +43,7 @@ def sync_index(name, body):
     es = connections.get_connection("default")
 
     if not es.indices.exists_alias(name=name):
-        # We probably haven't synced before, that means we need to create an index, and then alias it
+        # We probably haven't synced before, that means we need to create an index, and then alias
         build_versioned_index(name, body=body)
         return
 

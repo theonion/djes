@@ -36,7 +36,6 @@ def shallow_class_factory(model):
         return type(str(name), (model,), overrides)
 
 
-
 class IndexableManager(models.Manager):
     """a custom manager class to handle integration of native django models and elasticsearch storage
     """
