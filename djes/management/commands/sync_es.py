@@ -35,7 +35,6 @@ def build_versioned_index(name, version=1, body=None, old_version=None):
         old_versioned_index_name = "{0}_{1:0>4}".format(name, old_version)
         actions.insert(0, {"remove": {"index": old_versioned_index_name, "alias": name}})
 
-    print(actions)
     es.indices.update_aliases(body={"actions": actions})
 
 

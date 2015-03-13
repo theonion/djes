@@ -1,5 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
-from elasticsearch import TransportError
+from django.core.management.base import BaseCommand
 from elasticsearch_dsl.connections import connections
 from elasticsearch.helpers import streaming_bulk
 
@@ -12,6 +11,10 @@ def model_iterator(model):
 
 
 def bulk_index(es, index=None, version=1):
+
+    if index not in indexable_registry.indexes:
+        # Looks like someone is requesting the indexing of something we don't have models for
+        return
 
     vindex = "{0}_{1:0>4}".format(index, version)
 
