@@ -37,4 +37,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         es = connections.get_connection("default")
-        bulk_index(es)
+        for index in list(indexable_registry.indexes):
+
+            alias = es.indices.get_alias(index)
+            index_name = list(alias)[0]
+            version = int(index_name.split("_")[-1])
+
+            bulk_index(es, index=alias, version=version)
