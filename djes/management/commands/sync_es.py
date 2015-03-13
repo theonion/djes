@@ -49,27 +49,33 @@ def sync_index(name, body):
     alias = es.indices.get_alias(name=name)
 
     # There will only be one key, let's the name from it
-    versioned_index_name = list(alias)[0]
+    index_name = list(alias)[0]
     if "settings" in body:
-        settings = es.indices.get_settings(index=versioned_index_name)[versioned_index_name]["settings"]
+        settings = es.indices.get_settings(index=index_name)[index_name]["settings"]
 
-        # This is a little hard to understand, but it works (credit: http://stackoverflow.com/q/9323749/931098)
+        # This is a little hard to understand, but it works. This basically checks if `settings`
+        # is a subset of `body["settings"]` (credit: http://stackoverflow.com/q/9323749/931098)
         if not all(item in settings.items() for item in body["settings"].items()):
-            # We need to update the settings...
-            es.indices.put_settings(index=versioned_index_name, body=body["settings"])
+            # Well, it looks like the settings have changed
+            es.indices.put_settings(index=index_name, body=body["settings"])
 
-    server_mappings = es.indices.get_mapping(index=versioned_index_name)[versioned_index_name]["mappings"]
+    server_mappings = es.indices.get_mapping(index=index_name)[index_name]["mappings"]
 
     for doc_type, mapping_body in body["mappings"].items():
         if mapping_body != server_mappings.get(doc_type, {}):
             try:
-                es.indices.put_mapping(index=versioned_index_name, doc_type=doc_type, body=mapping_body)
+                es.indices.put_mapping(index=index_name, doc_type=doc_type, body=mapping_body)
             except TransportError as e:
                 if "MergeMappingException" in e.error:
                     # We need to do this the hard way
-                    old_version = int(versioned_index_name.split("_")[-1])
+                    old_version = int(index_name.split("_")[-1])
                     new_version = old_version + 1
-                    build_versioned_index(name, version=new_version, body=body, old_version=old_version)
+                    build_versioned_index(
+                        name,
+                        version=new_version,
+                        body=body,
+                        old_version=old_version
+                    )
                     break
                 else:
                     raise e
