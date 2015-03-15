@@ -38,7 +38,7 @@ class DjangoMapping(Mapping):
         self._meta = {}
 
         excludes = []
-        if hasattr(self, "Meta") and hasattr(self.Meta, "excludes"):
+        if hasattr(self.Meta, "excludes"):
             excludes = self.Meta.excludes
 
         # Now we add all the Django fields
@@ -73,6 +73,8 @@ class DjangoMapping(Mapping):
                 raise Warning("Can't find {}".format(field.get_internal_type()))
 
         self.properties._params["_id"] = {"path": self.model._meta.pk.name}
+        if getattr(self.Meta, "dynamic", "strict") == "strict":
+            self.properties._params["dynamic"] = "strict"
 
     @property
     def index(self):

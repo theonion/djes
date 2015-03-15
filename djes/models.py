@@ -6,17 +6,9 @@ from elasticsearch_dsl.connections import connections
 
 
 def shallow_class_factory(model):
-    """finds the class for a given model
-
-    :param model: an Indexable django model
-    :type model: django.db.models.Model
-
-    :return: the class of the model
-    :rtype: django.db.models.Model
-    """
     if model._deferred:
         model = model._meta.proxy_for_model
-    name = "%s_Shallow_%s" % (model.__name__, model.search_objects.get_doctype())
+    name = "{}_ElasticSearchResult".format(model.__name__)
     name = utils.truncate_name(name, 80, 32)
     # try to get the model from the django registry
     try:
@@ -56,16 +48,20 @@ class IndexableManager(models.Manager):
         id = None
         if len(args) == 1:
             id = args[0]
+        elif "id" in kwargs:
+            id = kwargs["id"]
+            del kwargs["id"]
+        elif "pk" in kwargs:
+            id = kwargs["pk"]
+            del kwargs["pk"]
         else:
-            id = kwargs.get("id") or kwargs.get("pk")
-        if id is None:
             raise self.model.DoesNotExist("You must provide an id to find")
 
         # connect to es and retrieve the document
-        es = connections.get_connection(using or "default")
+        es = connections.get_connection("default")
         doc = es.get(
             index=self.model.mapping.index,
-            doc_type=self.model.doc_type,
+            doc_type=self.model.mapping.doc_type,
             id=id,
             **kwargs
         )
@@ -74,17 +70,9 @@ class IndexableManager(models.Manager):
         return self.from_es(doc)
 
     def from_es(self, hit):
-        """copies the result of an elasticsearch search result and adds its `_source` to the top level of the body
-
-        :param hit: the result of an elasticsearch search
-        :type hit: dict
-
-        :return: the result of an elasticsearch search result and adds its `_source` to the top level of the body
-        :rtype: dict
-        """
         doc = hit.copy()
-        doc.update(doc.pop('_source'))
-        return self.model(**doc)  # Gonna need more than this, for the nested objects
+        klass = shallow_class_factory(self.model)
+        return klass(**doc["_source"])  # Gonna need more than this, for the nested objects
 
 
 class Indexable(models.Model):
@@ -96,6 +84,10 @@ class Indexable(models.Model):
 
     objects = models.Manager()
     search_objects = IndexableManager()
+
+    def save(self, *args, **kwargs):
+        super(Indexable, self).save(*args, **kwargs)
+        self.index()
 
     def to_dict(self):
         """converts the django model's fields to an elasticsearch mapping
@@ -115,3 +107,8 @@ class Indexable(models.Model):
             else:
                 out[key] = attribute
         return out
+
+    def index(self, refresh=False):
+        """Indexes this object"""
+        es = connections.get_connection("default")
+        es.index(self.mapping.index, self.mapping.doc_type, body=self.to_dict(), refresh=refresh)

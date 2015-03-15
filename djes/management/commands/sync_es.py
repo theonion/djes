@@ -23,12 +23,13 @@ def get_indexes():
     return indexes
 
 
-def build_versioned_index(name, version=1, body=None, old_version=None):
+def build_versioned_index(name, version=1, body=None, old_version=None, should_index=False):
     es = connections.get_connection("default")
     versioned_index_name = "{0}_{1:0>4}".format(name, version)
     es.indices.create(index=versioned_index_name, body=body)
 
-    bulk_index(es, index=name, version=version)  # Bulk index here...
+    if should_index:
+        bulk_index(es, index=name, version=version)  # Bulk index here...
 
     actions = [{"add": {"index": versioned_index_name, "alias": name}}]
     if old_version is not None:
@@ -38,12 +39,12 @@ def build_versioned_index(name, version=1, body=None, old_version=None):
     es.indices.update_aliases(body={"actions": actions})
 
 
-def sync_index(name, body):
+def sync_index(name, body, should_index=False):
     es = connections.get_connection("default")
 
     if not es.indices.exists_alias(name=name):
         # We probably haven't synced before, that means we need to create an index, and then alias
-        build_versioned_index(name, body=body)
+        build_versioned_index(name, body=body, should_index=should_index)
         return
 
     # The alias exists, so there's already a version of this index out there
@@ -90,4 +91,4 @@ class Command(BaseCommand):
         indexes = get_indexes()
 
         for index, body in indexes.items():
-            sync_index(index, body)
+            sync_index(index, body, should_index=True)

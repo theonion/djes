@@ -6,7 +6,7 @@ from djes.apps import indexable_registry
 
 
 def model_iterator(model):
-    for obj in model.objects.iterator():
+    for obj in model.search_objects.iterator():
         yield obj.to_dict()
 
 

@@ -8,6 +8,7 @@ def test_simple():
             "_id": {
                 "path": "id"
             },
+            "dynamic": "strict",
             "properties": {
                 "foo": {"type": "long"},
                 "id": {"type": "long"},
@@ -26,6 +27,7 @@ def test_manual():
             "_id": {
                 "path": "simpleobject_ptr"
             },
+            "dynamic": "strict",
             "properties": {
                 "foo": {"type": "long"},
                 "id": {"type": "long"},
@@ -49,6 +51,7 @@ def test_related():
             "_id": {
                 "path": "id"
             },
+            "dynamic": "strict",
             "properties": {
                 "id": {"type": "long"},
                 "name": {"type": "string"},

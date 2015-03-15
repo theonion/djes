@@ -5,7 +5,7 @@ from example.app.models import (
 
 
 @pytest.mark.django_db
-def test_simple():
+def test_simple(es_client):
     test = SimpleObject.objects.create(
         foo=1,
         bar="Bar",
@@ -20,7 +20,7 @@ def test_simple():
 
 
 @pytest.mark.django_db
-def test_relatable():
+def test_relatable(es_client):
     simple = RelatedSimpleObject.objects.create(datums="Some datums")
     nested = RelatedNestedObject.objects.create(denormalized_datums="Some denormalized datums")
 
