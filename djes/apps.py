@@ -1,4 +1,4 @@
-from django.apps import AppConfig
+from django.apps import AppConfig, apps
 
 from .models import Indexable
 from .mapping import DjangoMapping
@@ -68,13 +68,11 @@ class DJESConfig(AppConfig):
 
     def ready(self):
 
-        def register_subclasses(klass):
-            for subclass in klass.__subclasses__():
-                # only register concrete models
-                meta = getattr(subclass, "_meta")
+        # Let's register all the Indexable models
+        for model in apps.get_models():
+            if issubclass(model, Indexable):
+                meta = getattr(model, "_meta")
                 if meta and not getattr(meta, "abstract"):
-                    indexable_registry.register(subclass)
-                register_subclasses(subclass)
-        register_subclasses(Indexable)
+                    indexable_registry.register(model)
 
     connections.configure(**settings.ES_CONNECTIONS)
