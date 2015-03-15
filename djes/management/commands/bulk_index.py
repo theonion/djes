@@ -46,4 +46,4 @@ class Command(BaseCommand):
             index_name = list(alias)[0]
             version = int(index_name.split("_")[-1])
 
-            bulk_index(es, index=alias, version=version)
+            bulk_index(es, index=index, version=version)

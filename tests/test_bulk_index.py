@@ -11,6 +11,7 @@ def test_bulk_index(es_client):
 
     mommy.make(SimpleObject, _quantity=120)
     management.call_command("sync_es")
+    management.call_command("bulk_index")
     time.sleep(1)  # Let the index refresh
 
     response = es_client.search(
