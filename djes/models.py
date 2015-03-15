@@ -24,8 +24,24 @@ class ElasticSearchForeignKey(object):
         return self.instance
 
 
-class ElasticSearchRelation(object):
-    pass
+class ElasticSearchRelatedManager(object):
+    def __init__(self, model):
+        self.model = shallow_class_factory(model)
+        self.instances = None
+        self.name = None
+
+    def set(self, name, data):
+        self.instances = [self.model(**item_data) for item_data in data]
+        self.name = name
+
+    def get(self, parent_class):
+        return self
+
+    def all(self):
+        return self.instances
+
+    def count(self):
+        return len(self.instances)
 
 
 def shallow_class_factory(model):
@@ -50,15 +66,18 @@ def shallow_class_factory(model):
         }
 
         for attname, es_field in iteritems(model.mapping.properties._params["properties"]):
-            if type(es_field) == field.Object:
+            if type(es_field) == field.Nested:
                 # This is a nested object!
                 dj_field = model._meta.get_field(attname)
+
+                if isinstance(dj_field, models.ManyToManyField):
+                    mock_fkey = ElasticSearchRelatedManager(dj_field.rel.to)
+                    overrides[attname] = property(mock_fkey.get, mock_fkey.set)
+
                 if isinstance(dj_field, models.ForeignKey):
                     # Let's add a fake foreignkey attribute
                     mock_fkey = ElasticSearchForeignKey(dj_field.rel.to)
                     overrides[attname] = property(mock_fkey.get, mock_fkey.set)
-
-                # TODO: handle reverse relations
 
         return type(str(name), (model,), overrides)
 
@@ -140,7 +159,15 @@ class Indexable(models.Model):
             # TODO: What if we've mapped the property to a different name? Will we allow that?
 
             attribute = getattr(self, key)
-            if callable(attribute):
+
+            # First we check it this is a manager, in which case we have many related objects
+            if isinstance(attribute, models.Manager):
+                if issubclass(attribute.model, Indexable):
+                    out[key] = [obj.to_dict() for obj in attribute.all()]
+                else:
+                    out[key] = list(attribute.values_list("pk", flat=True))
+
+            elif callable(attribute):
                 out[key] = attribute()
             elif isinstance(attribute, Indexable):
                 out[key] = attribute.to_dict()

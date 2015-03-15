@@ -11,7 +11,6 @@ FIELD_MAPPINGS = {
     "CharField": {"type": "string"},
     "TextField": {"type": "string"},
     "SlugField": {"type": "string", "index": "not_analyzed"},
-    "ForeignKey": {"type": "long"}
 }
 
 
@@ -22,6 +21,34 @@ class EmptyMeta(object):
 class DjangoMapping(Mapping):
     """A subclass of the elasticsearch_dsl Mapping, allowing the automatic mapping
     of many fields on the model, while letting the developer override these settings"""
+
+    def _build_m2m_fields(self):
+        # Avoiding circular import
+        from .models import Indexable
+
+        excludes = getattr(self.Meta, "excludes", [])
+
+        # First, let's get any many-to-many relations
+        for field in self.model._meta.local_many_to_many:
+            db_column, attname = field.get_attname_column()
+
+            manual_field_mapping = getattr(self, attname, None)
+            if manual_field_mapping:
+                self.field(db_column, manual_field_mapping)
+                continue
+
+            # Checking to make sure this field hasn't been excluded
+            if attname in excludes:
+                continue
+
+            if issubclass(field.rel.to, Indexable):
+                # If the related model is indexable, nest it
+                related_properties = field.rel.to.mapping.properties.properties.to_dict()
+                self.field(field.name, {"type": "nested", "properties": related_properties})
+                continue
+            else:
+                # If it's not, let's just use a long
+                self.field(db_column or attname, {"type": "long"})
 
     def __init__(self, model):
         # Avoiding circular import
@@ -37,13 +64,15 @@ class DjangoMapping(Mapping):
         super(DjangoMapping, self).__init__(name)
         self._meta = {}
 
-        excludes = []
-        if hasattr(self.Meta, "excludes"):
-            excludes = self.Meta.excludes
+        excludes = excludes = getattr(self.Meta, "excludes", [])
 
         # Now we add all the Django fields
         parent_pointer_fields = self.model._meta.parents.values()
 
+        # First, let's get any many-to-many relations
+        self._build_m2m_fields()
+
+        # Now the rest of the fields
         for field, model in self.model._meta.get_fields_with_model():
             db_column, attname = field.get_attname_column()
 
@@ -62,7 +91,10 @@ class DjangoMapping(Mapping):
                 # We only want to nest fields when they are indexable, and not parent pointers.
                 if issubclass(field.rel.to, Indexable) and field not in parent_pointer_fields:
                     related_properties = field.rel.to.mapping.properties.properties.to_dict()
-                    self.field(field.name, {"type": "object", "properties": related_properties})
+                    self.field(field.name, {"type": "nested", "properties": related_properties})
+                    continue
+                else:
+                    self.field(db_column or attname, {"type": "long"})
                     continue
 
             field_args = FIELD_MAPPINGS.get(field.get_internal_type())
@@ -70,6 +102,7 @@ class DjangoMapping(Mapping):
                 # Do something
                 self.field(db_column or attname, field_args)
             else:
+                print("Can't find {}".format(field.get_internal_type()))
                 raise Warning("Can't find {}".format(field.get_internal_type()))
 
         self.properties._params["_id"] = {"path": self.model._meta.pk.name}

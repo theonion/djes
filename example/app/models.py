@@ -41,3 +41,12 @@ class RelatableObject(Indexable):
     name = models.CharField(max_length=255)
     simple = models.ForeignKey(RelatedSimpleObject)
     nested = models.ForeignKey(RelatedNestedObject)
+
+
+class Tag(Indexable):
+    name = models.CharField(max_length=255)
+
+
+class RelationsTestObject(Indexable):
+    data = models.CharField(max_length=255)
+    tags = models.ManyToManyField(Tag, related_name="tag")

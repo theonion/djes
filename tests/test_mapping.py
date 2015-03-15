@@ -1,4 +1,6 @@
-from example.app.models import SimpleObject, ManualMappingObject, RelatableObject
+from example.app.models import (
+    SimpleObject, ManualMappingObject, RelatableObject,
+    RelationsTestObject)
 
 
 def test_simple():
@@ -57,12 +59,34 @@ def test_related():
                 "name": {"type": "string"},
                 "simple_id": {"type": "long"},
                 "nested": {
-                    "type": "object",
+                    "type": "nested",
                     "properties": {
                         "id": {"type": "long"},
                         "denormalized_datums": {"type": "string"}
                     }
                 },
+            }
+        }
+    }
+
+
+def test_many_to_many():
+    assert RelationsTestObject.mapping.to_dict() == {
+        "app_relationstestobject": {
+            "_id": {
+                "path": "id"
+            },
+            "dynamic": "strict",
+            "properties": {
+                "id": {"type": "long"},
+                "data": {"type": "string"},
+                "tags": {
+                    "type": "nested",
+                    "properties": {
+                        "id": {"type": "long"},
+                        "name": {"type": "string"}
+                    }
+                }
             }
         }
     }

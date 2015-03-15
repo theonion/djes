@@ -1,7 +1,9 @@
 import pytest
 from example.app.models import (
-    SimpleObject, RelatableObject, RelatedSimpleObject, RelatedNestedObject
+    SimpleObject, RelatableObject, RelatedSimpleObject, RelatedNestedObject,
+    Tag, RelationsTestObject
 )
+from model_mommy import mommy
 
 
 @pytest.mark.django_db
@@ -38,3 +40,20 @@ def test_relatable(es_client):
             "denormalized_datums": "Some denormalized datums"
         }
     }
+
+
+@pytest.mark.django_db
+def test_many_to_many(es_client):
+
+    tags = mommy.make(Tag, _quantity=3)
+
+    test_object = mommy.make(RelationsTestObject, make_m2m=False)
+    test_object.tags.add(*tags)
+
+    document = test_object.to_dict()
+
+    assert document["id"] == test_object.id
+    assert document["data"] == test_object.data
+
+    assert len(document["tags"]) == 3
+    assert {"id": tags[0].id, "name": tags[0].name} in document["tags"]
