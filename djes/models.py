@@ -131,11 +131,15 @@ class Indexable(models.Model):
         for field in cls._meta.local_many_to_many:
             local_many_to_many_fields[field.get_attname_column()[1]] = field
 
-        for name, value in hit["_source"].items():
+        to_be_deleted = []
+        for name, value in doc["_source"].items():
             if name in local_many_to_many_fields:
                 field = local_many_to_many_fields[name]
                 if not hasattr(field.rel.to, "from_es"):
-                    del doc["_source"][name]
+                    to_be_deleted.append(name)
+
+        for name in to_be_deleted:
+            del doc["_source"][name]
 
         return klass(**doc["_source"])
 
