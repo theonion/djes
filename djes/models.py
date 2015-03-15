@@ -125,7 +125,18 @@ class Indexable(models.Model):
     def from_es(cls, hit):
         doc = hit.copy()
         klass = shallow_class_factory(cls)
-        print(doc)
+
+        # We can pass in the entire source, except in the case that we have a many-to-many
+        local_many_to_many_fields = {}
+        for field in cls._meta.local_many_to_many:
+            local_many_to_many_fields[field.get_attname_column()[1]] = field
+
+        for name, value in doc["_source"].items():
+            if name in local_many_to_many_fields:
+                field = local_many_to_many_fields[name]
+                if not hasattr(field.rel.to, "from_es"):
+                    del doc["_source"][name]
+
         return klass(**doc["_source"])
 
     @classmethod

@@ -79,6 +79,7 @@ def test_many_to_many():
             "properties": {
                 "id": {"type": "long"},
                 "data": {"type": "string"},
+                "dumb_tags": {"type": "long"},
                 "tags": {
                     "type": "nested",
                     "properties": {

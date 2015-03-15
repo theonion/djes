@@ -3,7 +3,7 @@ import pytest
 from model_mommy import mommy
 import time
 
-from example.app.models import SimpleObject, RelatableObject, RelationsTestObject, Tag
+from example.app.models import SimpleObject, RelatableObject, RelationsTestObject, Tag, DumbTag
 
 
 @pytest.mark.django_db
@@ -22,8 +22,14 @@ def test_simple_get(es_client):
     assert from_es.__class__.__name__ == "SimpleObject_ElasticSearchResult"
     assert from_es.save is None
 
+    from_es = SimpleObject.search_objects.get(pk=test_object.id)
+    assert from_es.foo == test_object.foo
+
     with pytest.raises(RelatableObject.DoesNotExist):
         RelatableObject.search_objects.get(id=test_object.id)
+
+    with pytest.raises(RelatableObject.DoesNotExist):
+        RelatableObject.search_objects.get()
 
 
 @pytest.mark.django_db
@@ -50,9 +56,11 @@ def test_m2m(es_client):
     management.call_command("sync_es")
 
     tags = mommy.make(Tag, _quantity=3)
+    dumb_tags = mommy.make(DumbTag, _quantity=2)
 
     test_object = mommy.make(RelationsTestObject, make_m2m=False)
     test_object.tags.add(*tags)
+    test_object.dumb_tags.add(*dumb_tags)
     test_object.index()
     time.sleep(1)  # Let the index refresh
 
@@ -64,3 +72,6 @@ def test_m2m(es_client):
 
     for i in range(0, 3):
         assert from_es.tags.all()[i].id == tags[i].id
+
+    assert dumb_tags[0].id in from_es.dumb_tags.values_list("pk", flat=True)
+    assert dumb_tags[1].id in from_es.dumb_tags.values_list("pk", flat=True)

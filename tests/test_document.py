@@ -1,8 +1,5 @@
 import pytest
-from example.app.models import (
-    SimpleObject, RelatableObject, RelatedSimpleObject, RelatedNestedObject,
-    Tag, RelationsTestObject
-)
+from example.app.models import *  # noqa
 from model_mommy import mommy
 
 
@@ -46,9 +43,11 @@ def test_relatable(es_client):
 def test_many_to_many(es_client):
 
     tags = mommy.make(Tag, _quantity=3)
+    dumb_tags = mommy.make(DumbTag, _quantity=4)
 
     test_object = mommy.make(RelationsTestObject, make_m2m=False)
     test_object.tags.add(*tags)
+    test_object.dumb_tags.add(*dumb_tags)
 
     document = test_object.to_dict()
 
@@ -57,3 +56,6 @@ def test_many_to_many(es_client):
 
     assert len(document["tags"]) == 3
     assert {"id": tags[0].id, "name": tags[0].name} in document["tags"]
+
+    assert len(document["dumb_tags"]) == 4
+    assert dumb_tags[0].id in document["dumb_tags"]
