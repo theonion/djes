@@ -25,7 +25,7 @@ def bulk_index(es, index=None, version=1):
 
     for model in indexable_registry.indexes[index]:
         doc_type = model.mapping.doc_type
-        for ok, result in streaming_bulk(es, model_iterator(model), index=vindex, doc_type=doc_type):
+        for ok, res in streaming_bulk(es, model_iterator(model), index=vindex, doc_type=doc_type):
             continue
 
     es.indices.put_settings(

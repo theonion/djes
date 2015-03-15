@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from elasticsearch import TransportError
 from elasticsearch_dsl.connections import connections
 

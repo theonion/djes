@@ -1,7 +1,6 @@
 from django.core import management
 import pytest
 from model_mommy import mommy
-from six import iteritems
 import time
 
 from example.app.models import SimpleObject, RelatableObject

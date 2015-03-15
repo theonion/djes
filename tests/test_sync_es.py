@@ -25,7 +25,11 @@ def test_sync_index(es_client):
     sync_index("djes-testing-index", body=settings_body)
 
     assert es_client.indices.exists("djes-testing-index_0001")
-    assert es_client.indices.get_alias("djes-testing-index") == {"djes-testing-index_0001": {"aliases": {"djes-testing-index": {}}}}
+    assert es_client.indices.get_alias("djes-testing-index") == {
+        "djes-testing-index_0001": {
+            "aliases": {"djes-testing-index": {}}
+        }
+    }
 
     # Let's sync again, this should update the settings
     settings_body["settings"]["index"]["number_of_replicas"] = "2"
@@ -34,7 +38,8 @@ def test_sync_index(es_client):
     assert es_client.indices.exists("djes-testing-index_0002") is False
 
     # Make sure the settings took
-    new_settings = es_client.indices.get_settings("djes-testing-index_0001")["djes-testing-index_0001"]["settings"]
+    new_settings = es_client.indices.get_settings("djes-testing-index_0001")
+    new_settings = new_settings["djes-testing-index_0001"]["settings"]
     assert new_settings["index"]["number_of_replicas"] == "2"
 
     # Now let's add another mapping
