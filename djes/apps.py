@@ -39,10 +39,6 @@ class IndexableRegistry(object):
 
         self.indexes[klass.mapping.index].append(klass)
 
-    def get_doctypes(self, klass):
-        """Returns all the mapping types for a given class."""
-        base = klass.get_base_class()
-        return self.families[base]
 
 indexable_registry = IndexableRegistry()
 
