@@ -1,85 +1,12 @@
-from django.apps import apps
 from django.db import models
-from django.db.backends import utils
 
 from elasticsearch_dsl.connections import connections
-from elasticsearch_dsl import field
+from elasticsearch_dsl import Search
 from elasticsearch.exceptions import NotFoundError
 
-from six import iteritems
+from .apps import indexable_registry
 
-
-class ElasticSearchForeignKey(object):
-
-    def __init__(self, model):
-        self.model = shallow_class_factory(model)
-        self.instance = None
-        self.name = None
-
-    def set(self, name, data):
-        self.instance = self.model(**data)
-        self.name = name
-
-    def get(self, parent_class):
-        return self.instance
-
-
-class ElasticSearchRelatedManager(object):
-    def __init__(self, model):
-        self.model = shallow_class_factory(model)
-        self.instances = None
-        self.name = None
-
-    def set(self, name, data):
-        self.instances = [self.model(**item_data) for item_data in data]
-        self.name = name
-
-    def get(self, parent_class):
-        return self
-
-    def all(self):
-        return self.instances
-
-    def count(self):
-        return len(self.instances)
-
-
-def shallow_class_factory(model):
-    if model._deferred:
-        model = model._meta.proxy_for_model
-    name = "{}_ElasticSearchResult".format(model.__name__)
-    name = utils.truncate_name(name, 80, 32)
-    # try to get the model from the django registry
-    try:
-        return apps.get_model(model._meta.app_label, name)
-    # get the object's type - hopefully a django model
-    except LookupError:
-        class Meta(object):
-            proxy = True
-            app_label = model._meta.app_label
-
-        overrides = {
-            "save": None,
-            "Meta": Meta,
-            "__module__": model.__module__,
-            "_deferred": True,
-        }
-
-        for attname, es_field in iteritems(model.mapping.properties._params["properties"]):
-            if type(es_field) == field.Nested:
-                # This is a nested object!
-                dj_field = model._meta.get_field(attname)
-
-                if isinstance(dj_field, models.ManyToManyField):
-                    mock_fkey = ElasticSearchRelatedManager(dj_field.rel.to)
-                    overrides[attname] = property(mock_fkey.get, mock_fkey.set)
-
-                if isinstance(dj_field, models.ForeignKey):
-                    # Let's add a fake foreignkey attribute
-                    mock_fkey = ElasticSearchForeignKey(dj_field.rel.to)
-                    overrides[attname] = property(mock_fkey.get, mock_fkey.set)
-
-        return type(str(name), (model,), overrides)
+from .factory import shallow_class_factory
 
 
 class IndexableManager(models.Manager):
@@ -111,6 +38,7 @@ class IndexableManager(models.Manager):
 
         # connect to es and retrieve the document
         es = connections.get_connection("default")
+
         doc_type = self.model.mapping.doc_type
         index = self.model.mapping.index
         try:
@@ -125,13 +53,26 @@ class IndexableManager(models.Manager):
             raise self.model.DoesNotExist(message)
 
         # parse and return
-        return self.from_es(doc)
+        return self.model.from_es(doc)
 
-    def from_es(self, hit):
-        doc = hit.copy()
-        klass = shallow_class_factory(self.model)
+    def search(self):
+        client = connections.get_connection("default")
 
-        return klass(**doc["_source"])  # Gonna need more than this, for the nested objects
+        model_callbacks = {}
+        indexes = []
+
+        if self.model in indexable_registry.families:
+            # There are child models...
+            for doc_type, cls in indexable_registry.families[self.model].items():
+
+                model_callbacks[doc_type] = cls.from_es
+                indexes.append(cls.mapping.index)
+        else:
+            # Just this one!
+            model_callbacks[self.model.mapping.doc_type] = self.model.from_es
+            indexes.append(self.model.mapping.index)
+
+        return Search().using(client).index(*indexes).doc_type(**model_callbacks)
 
 
 class Indexable(models.Model):
@@ -179,3 +120,16 @@ class Indexable(models.Model):
         """Indexes this object"""
         es = connections.get_connection("default")
         es.index(self.mapping.index, self.mapping.doc_type, body=self.to_dict(), refresh=refresh)
+
+    @classmethod
+    def from_es(cls, hit):
+        doc = hit.copy()
+        klass = shallow_class_factory(cls)
+        print(doc)
+        return klass(**doc["_source"])
+
+    @classmethod
+    def get_base_class(cls):
+        while cls.__bases__ and cls.__bases__[0] != Indexable:
+            cls = cls.__bases__[0]
+        return cls

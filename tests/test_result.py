@@ -12,6 +12,7 @@ def test_simple_get(es_client):
     management.call_command("sync_es")
 
     test_object = mommy.make(SimpleObject)
+    test_object.index()
     time.sleep(1)  # Let the index refresh
 
     from_es = SimpleObject.search_objects.get(id=test_object.id)

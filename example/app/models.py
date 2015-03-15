@@ -20,7 +20,6 @@ class ManualMappingObject(SimpleObject):
     class Mapping:
         class Meta:
             doc_type = "super_manual_mapping"
-            index = "butts"
             excludes = ("garbage",)
 
         bar = field.String(fields={"raw": field.String(index="not_analyzed")})

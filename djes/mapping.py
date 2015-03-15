@@ -24,8 +24,6 @@ class DjangoMapping(Mapping):
 
     def _build_m2m_fields(self):
         # Avoiding circular import
-        from .models import Indexable
-
         excludes = getattr(self.Meta, "excludes", [])
 
         # First, let's get any many-to-many relations
@@ -41,7 +39,7 @@ class DjangoMapping(Mapping):
             if attname in excludes:
                 continue
 
-            if issubclass(field.rel.to, Indexable):
+            if hasattr(field.rel.to, "from_es"):
                 # If the related model is indexable, nest it
                 related_properties = field.rel.to.mapping.properties.properties.to_dict()
                 self.field(field.name, {"type": "nested", "properties": related_properties})
@@ -52,7 +50,7 @@ class DjangoMapping(Mapping):
 
     def __init__(self, model):
         # Avoiding circular import
-        from .models import Indexable
+        # from .models import Indexable
 
         self.model = model
         if not hasattr(self, "Meta"):
@@ -89,7 +87,7 @@ class DjangoMapping(Mapping):
                 # This is a related field, so it should maybe be nested?
 
                 # We only want to nest fields when they are indexable, and not parent pointers.
-                if issubclass(field.rel.to, Indexable) and field not in parent_pointer_fields:
+                if hasattr(field.rel.to, "from_es") and field not in parent_pointer_fields:
                     related_properties = field.rel.to.mapping.properties.properties.to_dict()
                     self.field(field.name, {"type": "nested", "properties": related_properties})
                     continue

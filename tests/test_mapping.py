@@ -23,7 +23,6 @@ def test_simple():
 
 def test_manual():
     assert ManualMappingObject.mapping.doc_type == "super_manual_mapping"
-    assert ManualMappingObject.mapping.index == "butts"
     assert ManualMappingObject.mapping.to_dict() == {
         "super_manual_mapping": {
             "_id": {
