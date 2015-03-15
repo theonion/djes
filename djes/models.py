@@ -131,7 +131,7 @@ class Indexable(models.Model):
         for field in cls._meta.local_many_to_many:
             local_many_to_many_fields[field.get_attname_column()[1]] = field
 
-        for name, value in doc["_source"].items():
+        for name, value in hit["_source"].items():
             if name in local_many_to_many_fields:
                 field = local_many_to_many_fields[name]
                 if not hasattr(field.rel.to, "from_es"):
