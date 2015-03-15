@@ -3,6 +3,25 @@ from django.db import models
 from django.db.backends import utils
 
 from elasticsearch_dsl.connections import connections
+from elasticsearch_dsl import field
+from elasticsearch.exceptions import NotFoundError
+
+from six import iteritems
+
+
+class ElasticSearchForeignKey(object):
+
+    def __init__(self, model):
+        self.model = shallow_class_factory(model)
+        self.instance = None
+        self.name = None
+
+    def set(self, name, data):
+        self.instance = self.model(**data)
+        self.name = name
+
+    def get(self, parent_class):
+        return self.instance
 
 
 def shallow_class_factory(model):
@@ -25,6 +44,16 @@ def shallow_class_factory(model):
             "__module__": model.__module__,
             "_deferred": True,
         }
+
+        for attname, es_field in iteritems(model.mapping.properties._params["properties"]):
+            if type(es_field) == field.Object:
+                # This is a nested object!
+                dj_field = model._meta.get_field(attname)
+                if isinstance(dj_field, models.ForeignKey):
+                    # Let's add a fake foreignkey attribute
+                    mock_fkey = ElasticSearchForeignKey(dj_field.rel.to)
+                    overrides[attname] = property(mock_fkey.get, mock_fkey.set)
+
         return type(str(name), (model,), overrides)
 
 
@@ -59,12 +88,18 @@ class IndexableManager(models.Manager):
 
         # connect to es and retrieve the document
         es = connections.get_connection("default")
-        doc = es.get(
-            index=self.model.mapping.index,
-            doc_type=self.model.mapping.doc_type,
-            id=id,
-            **kwargs
-        )
+        doc_type = self.model.mapping.doc_type
+        index = self.model.mapping.index
+        try:
+            doc = es.get(
+                index=index,
+                doc_type=doc_type,
+                id=id,
+                **kwargs
+            )
+        except NotFoundError:
+            message = "Can't find a document for {}, using id {}".format(doc_type, id)
+            raise self.model.DoesNotExist(message)
 
         # parse and return
         return self.from_es(doc)
@@ -72,6 +107,7 @@ class IndexableManager(models.Manager):
     def from_es(self, hit):
         doc = hit.copy()
         klass = shallow_class_factory(self.model)
+
         return klass(**doc["_source"])  # Gonna need more than this, for the nested objects
 
 
