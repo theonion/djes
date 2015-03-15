@@ -1,5 +1,4 @@
 from djes.management.commands.sync_es import get_indexes, sync_index
-from elasticsearch_dsl.connections import connections
 
 
 def test_index_settings():
@@ -53,7 +52,8 @@ def test_sync_index(es_client):
     # Make sure the new mapping got added
     assert es_client.indices.exists("djes-testing-index_0001")
     assert es_client.indices.exists("djes-testing-index_0002") is False
-    new_mapping = es_client.indices.get_mapping(index="djes-testing-index", doc_type="testing-two")["djes-testing-index_0001"]
+    new_mapping = es_client.indices.get_mapping(index="djes-testing-index", doc_type="testing-two")
+    new_mapping = new_mapping["djes-testing-index_0001"]
     assert new_mapping["mappings"]["testing-two"] == settings_body["mappings"]["testing-two"]
 
     # Now lets add another field to that mapping
@@ -66,7 +66,8 @@ def test_sync_index(es_client):
     sync_index("djes-testing-index", body=settings_body)
     assert es_client.indices.exists("djes-testing-index_0001")
     assert es_client.indices.exists("djes-testing-index_0002") is False
-    new_mapping = es_client.indices.get_mapping(index="djes-testing-index", doc_type="testing-two")["djes-testing-index_0001"]
+    new_mapping = es_client.indices.get_mapping(index="djes-testing-index", doc_type="testing-two")
+    new_mapping = new_mapping["djes-testing-index_0001"]
     assert new_mapping["mappings"]["testing-two"] == settings_body["mappings"]["testing-two"]
 
     # Now let's add a mapping that will error out
@@ -80,7 +81,8 @@ def test_sync_index(es_client):
 
     assert es_client.indices.exists("djes-testing-index_0001")
     assert es_client.indices.exists("djes-testing-index_0002")
-    new_mapping = es_client.indices.get_mapping(index="djes-testing-index", doc_type="testing-two")["djes-testing-index_0002"]
+    new_mapping = es_client.indices.get_mapping(index="djes-testing-index", doc_type="testing-two")
+    new_mapping = new_mapping["djes-testing-index_0002"]
     assert new_mapping["mappings"]["testing-two"] == settings_body["mappings"]["testing-two"]
 
     es_client.indices.delete_alias("djes-testing-index_*", "_all", ignore=[404])
