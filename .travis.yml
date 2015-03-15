@@ -8,5 +8,7 @@ install:
   - travis_retry pip install -e .
   - travis_retry pip install file://$(pwd)#egg=betty-cropper[dev]
 script:
-  - py.test tests/
+  - py.test --cov betty --cov-report term-missing
+after_success:
+  - coveralls
 sudo: false

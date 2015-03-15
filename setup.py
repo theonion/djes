@@ -23,7 +23,8 @@ dev_requires = [
     "pytest==2.6.4",
     "pytest-django==2.8.0",
     "pytest-cov==1.8.1",
-    "model_mommy==1.2.3"
+    "model_mommy==1.2.3",
+    "coveralls==0.5"
 ]
 
 install_requires = [

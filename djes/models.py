@@ -24,6 +24,10 @@ class ElasticSearchForeignKey(object):
         return self.instance
 
 
+class ElasticSearchRelation(object):
+    pass
+
+
 def shallow_class_factory(model):
     if model._deferred:
         model = model._meta.proxy_for_model
@@ -54,6 +58,8 @@ def shallow_class_factory(model):
                     mock_fkey = ElasticSearchForeignKey(dj_field.rel.to)
                     overrides[attname] = property(mock_fkey.get, mock_fkey.set)
 
+                # TODO: handle reverse relations
+
         return type(str(name), (model,), overrides)
 
 
@@ -61,7 +67,7 @@ class IndexableManager(models.Manager):
     """a custom manager class to handle integration of native django models and elasticsearch storage
     """
 
-    def get(self, *args, **kwargs):
+    def get(self, **kwargs):
         """gets a specific document from elasticsearch
 
         :return: the result of the search
@@ -75,9 +81,7 @@ class IndexableManager(models.Manager):
         """
         # get the doc id
         id = None
-        if len(args) == 1:
-            id = args[0]
-        elif "id" in kwargs:
+        if "id" in kwargs:
             id = kwargs["id"]
             del kwargs["id"]
         elif "pk" in kwargs:
