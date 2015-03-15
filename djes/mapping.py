@@ -100,7 +100,6 @@ class DjangoMapping(Mapping):
                 # Do something
                 self.field(db_column or attname, field_args)
             else:
-                print("Can't find {}".format(field.get_internal_type()))
                 raise Warning("Can't find {}".format(field.get_internal_type()))
 
         self.properties._params["_id"] = {"path": self.model._meta.pk.name}
