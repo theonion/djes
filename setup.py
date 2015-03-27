@@ -10,7 +10,7 @@ import sys
 
 name = 'djes'
 package = 'djes'
-description = "Connecting Django and elsaticsearch-dsl"
+description = "Connecting Django and elasticsearch-dsl"
 url = "https://github.com/theonion/djes"
 author = "Chris Sinchok"
 author_email = 'csinchok@theonion.com'
