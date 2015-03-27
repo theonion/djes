@@ -1,4 +1,6 @@
-from example.app.models import SimpleObject, ManualMappingObject, RelatableObject
+from example.app.models import (
+    SimpleObject, ManualMappingObject, RelatableObject,
+    RelationsTestObject)
 
 
 def test_simple():
@@ -8,6 +10,7 @@ def test_simple():
             "_id": {
                 "path": "id"
             },
+            "dynamic": "strict",
             "properties": {
                 "foo": {"type": "long"},
                 "id": {"type": "long"},
@@ -20,12 +23,12 @@ def test_simple():
 
 def test_manual():
     assert ManualMappingObject.mapping.doc_type == "super_manual_mapping"
-    assert ManualMappingObject.mapping.index == "butts"
     assert ManualMappingObject.mapping.to_dict() == {
         "super_manual_mapping": {
             "_id": {
                 "path": "simpleobject_ptr"
             },
+            "dynamic": "strict",
             "properties": {
                 "foo": {"type": "long"},
                 "id": {"type": "long"},
@@ -49,17 +52,41 @@ def test_related():
             "_id": {
                 "path": "id"
             },
+            "dynamic": "strict",
             "properties": {
                 "id": {"type": "long"},
                 "name": {"type": "string"},
                 "simple_id": {"type": "long"},
                 "nested": {
-                    "type": "object",
+                    "type": "nested",
                     "properties": {
                         "id": {"type": "long"},
                         "denormalized_datums": {"type": "string"}
                     }
                 },
+            }
+        }
+    }
+
+
+def test_many_to_many():
+    assert RelationsTestObject.mapping.to_dict() == {
+        "app_relationstestobject": {
+            "_id": {
+                "path": "id"
+            },
+            "dynamic": "strict",
+            "properties": {
+                "id": {"type": "long"},
+                "data": {"type": "string"},
+                "dumb_tags": {"type": "long"},
+                "tags": {
+                    "type": "nested",
+                    "properties": {
+                        "id": {"type": "long"},
+                        "name": {"type": "string"}
+                    }
+                }
             }
         }
     }

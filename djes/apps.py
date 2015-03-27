@@ -1,24 +1,9 @@
-from django.apps import AppConfig
+from django.apps import AppConfig, apps
 
-from .models import Indexable
 from .mapping import DjangoMapping
 from .conf import settings
 
 from elasticsearch_dsl.connections import connections
-
-
-def get_base_class(cls):
-    """finds the absolute base
-
-    :param cls: the class instance
-    :type cls: object
-
-    :return: the base class
-    :rtype: type
-    """
-    while cls.__bases__ and cls.__bases__[0] != Indexable:
-        cls = cls.__bases__[0]
-    return cls
 
 
 class IndexableRegistry(object):
@@ -44,7 +29,7 @@ class IndexableRegistry(object):
         doc_type = klass.mapping.doc_type
 
         self.all_models[doc_type] = klass
-        base_class = get_base_class(klass)
+        base_class = klass.get_base_class()
         if base_class not in self.families:
             self.families[base_class] = {}
         self.families[base_class][doc_type] = klass
@@ -55,12 +40,6 @@ class IndexableRegistry(object):
         self.indexes[klass.mapping.index].append(klass)
 
 
-
-    def get_doctypes(self, klass):
-        """Returns all the mapping types for a given class."""
-        base = get_base_class(klass)
-        return self.families[base]
-
 indexable_registry = IndexableRegistry()
 
 
@@ -70,13 +49,13 @@ class DJESConfig(AppConfig):
 
     def ready(self):
 
-        def register_subclasses(klass):
-            for subclass in klass.__subclasses__():
-                # only register concrete models
-                meta = getattr(subclass, "_meta")
+        # Let's register all the Indexable models
+        for model in apps.get_models():
+
+            # If it quacks...
+            if hasattr(model, "from_es"):
+                meta = getattr(model, "_meta")
                 if meta and not getattr(meta, "abstract"):
-                    indexable_registry.register(subclass)
-                register_subclasses(subclass)
-        register_subclasses(Indexable)
+                    indexable_registry.register(model)
 
     connections.configure(**settings.ES_CONNECTIONS)

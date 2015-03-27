@@ -1,52 +1,19 @@
-from django.apps import apps
 from django.db import models
-from django.db.backends import utils
-from django.db.models.fields.related import RelatedField
 
-from elasticsearch_dsl.mapping import Mapping
 from elasticsearch_dsl.connections import connections
+from elasticsearch_dsl import Search
+from elasticsearch.exceptions import NotFoundError
 
-from .conf import settings
-from .mapping import DjangoMapping
+from .apps import indexable_registry
 
-
-def shallow_class_factory(model):
-    """finds the class for a given model
-
-    :param model: an Indexable django model
-    :type model: django.db.models.Model
-
-    :return: the class of the model
-    :rtype: django.db.models.Model
-    """
-    if model._deferred:
-        model = model._meta.proxy_for_model
-    name = "%s_Shallow_%s" % (model.__name__, model.search_objects.get_doctype())
-    name = utils.truncate_name(name, 80, 32)
-    # try to get the model from the django registry
-    try:
-        return apps.get_model(model._meta.app_label, name)
-    # get the object's type - hopefully a django model
-    except LookupError:
-        class Meta(object):
-            proxy = True
-            app_label = model._meta.app_label
-
-        overrides = {
-            "save": None,
-            "Meta": Meta,
-            "__module__": model.__module__,
-            "_deferred": True,
-        }
-        return type(str(name), (model,), overrides)
-
+from .factory import shallow_class_factory
 
 
 class IndexableManager(models.Manager):
     """a custom manager class to handle integration of native django models and elasticsearch storage
     """
 
-    def get(self, *args, **kwargs):
+    def get(self, **kwargs):
         """gets a specific document from elasticsearch
 
         :return: the result of the search
@@ -60,37 +27,52 @@ class IndexableManager(models.Manager):
         """
         # get the doc id
         id = None
-        if len(args) == 1:
-            id = args[0]
+        if "id" in kwargs:
+            id = kwargs["id"]
+            del kwargs["id"]
+        elif "pk" in kwargs:
+            id = kwargs["pk"]
+            del kwargs["pk"]
         else:
-            id = kwargs.get("id") or kwargs.get("pk")
-        if id is None:
             raise self.model.DoesNotExist("You must provide an id to find")
 
         # connect to es and retrieve the document
-        es = connections.get_connection(using or "default")
-        doc = es.get(
-            index=self.model.mapping.index,
-            doc_type=self.model.doc_type,
-            id=id,
-            **kwargs
-        )
+        es = connections.get_connection("default")
+
+        doc_type = self.model.mapping.doc_type
+        index = self.model.mapping.index
+        try:
+            doc = es.get(
+                index=index,
+                doc_type=doc_type,
+                id=id,
+                **kwargs
+            )
+        except NotFoundError:
+            message = "Can't find a document for {}, using id {}".format(doc_type, id)
+            raise self.model.DoesNotExist(message)
 
         # parse and return
-        return self.from_es(doc)
+        return self.model.from_es(doc)
 
-    def from_es(self, hit):
-        """copies the result of an elasticsearch search result and adds its `_source` to the top level of the body
+    def search(self):
+        client = connections.get_connection("default")
 
-        :param hit: the result of an elasticsearch search
-        :type hit: dict
+        model_callbacks = {}
+        indexes = []
 
-        :return: the result of an elasticsearch search result and adds its `_source` to the top level of the body
-        :rtype: dict
-        """
-        doc = hit.copy()
-        doc.update(doc.pop('_source'))
-        return self.model(**doc)  # Gonna need more than this, for the nested objects
+        if self.model in indexable_registry.families:
+            # There are child models...
+            for doc_type, cls in indexable_registry.families[self.model].items():
+
+                model_callbacks[doc_type] = cls.from_es
+                indexes.append(cls.mapping.index)
+        else:
+            # Just this one!
+            model_callbacks[self.model.mapping.doc_type] = self.model.from_es
+            indexes.append(self.model.mapping.index)
+
+        return Search().using(client).index(*indexes).doc_type(**model_callbacks)
 
 
 class Indexable(models.Model):
@@ -103,6 +85,10 @@ class Indexable(models.Model):
     objects = models.Manager()
     search_objects = IndexableManager()
 
+    def save(self, *args, **kwargs):
+        super(Indexable, self).save(*args, **kwargs)
+        self.index()
+
     def to_dict(self):
         """converts the django model's fields to an elasticsearch mapping
 
@@ -114,10 +100,51 @@ class Indexable(models.Model):
             # TODO: What if we've mapped the property to a different name? Will we allow that?
 
             attribute = getattr(self, key)
-            if callable(attribute):
+
+            # First we check it this is a manager, in which case we have many related objects
+            if isinstance(attribute, models.Manager):
+                if issubclass(attribute.model, Indexable):
+                    out[key] = [obj.to_dict() for obj in attribute.all()]
+                else:
+                    out[key] = list(attribute.values_list("pk", flat=True))
+
+            elif callable(attribute):
                 out[key] = attribute()
             elif isinstance(attribute, Indexable):
                 out[key] = attribute.to_dict()
             else:
                 out[key] = attribute
         return out
+
+    def index(self, refresh=False):
+        """Indexes this object"""
+        es = connections.get_connection("default")
+        es.index(self.mapping.index, self.mapping.doc_type, body=self.to_dict(), refresh=refresh)
+
+    @classmethod
+    def from_es(cls, hit):
+        doc = hit.copy()
+        klass = shallow_class_factory(cls)
+
+        # We can pass in the entire source, except in the case that we have a many-to-many
+        local_many_to_many_fields = {}
+        for field in cls._meta.local_many_to_many:
+            local_many_to_many_fields[field.get_attname_column()[1]] = field
+
+        to_be_deleted = []
+        for name, value in doc["_source"].items():
+            if name in local_many_to_many_fields:
+                field = local_many_to_many_fields[name]
+                if not hasattr(field.rel.to, "from_es"):
+                    to_be_deleted.append(name)
+
+        for name in to_be_deleted:
+            del doc["_source"][name]
+
+        return klass(**doc["_source"])
+
+    @classmethod
+    def get_base_class(cls):
+        while cls.__bases__ and cls.__bases__[0] != Indexable:
+            cls = cls.__bases__[0]
+        return cls

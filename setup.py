@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup
-from setuptools.command.test import test as TestCommand
+from setuptools.command.test import test as TestCommand  # noqa
 import os
 import re
 import sys
@@ -21,7 +21,10 @@ setup_requires = []
 dev_requires = [
     "flake8>=2.0,<2.1",
     "pytest==2.6.4",
-    "pytest-django==2.8.0"
+    "pytest-django==2.8.0",
+    "pytest-cov==1.8.1",
+    "model_mommy==1.2.3",
+    "coveralls==0.5"
 ]
 
 install_requires = [
@@ -75,7 +78,7 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
+        # import here, cause outside the eggs aren't loaded
         import pytest
         errno = pytest.main(self.test_args)
         sys.exit(errno)
