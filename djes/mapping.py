@@ -11,6 +11,8 @@ FIELD_MAPPINGS = {
     "CharField": {"type": "string"},
     "TextField": {"type": "string"},
     "SlugField": {"type": "string", "index": "not_analyzed"},
+    "DateTimeField": {"type": "date"},
+    "DateField": {"type": "date"}
 }
 
 
