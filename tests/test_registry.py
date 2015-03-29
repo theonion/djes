@@ -5,4 +5,4 @@ from example.app.models import SimpleObject
 
 def test_simple():
     assert indexable_registry.all_models.get("app_simpleobject") == SimpleObject
-    assert len(indexable_registry.all_models) == 6
+    assert len(indexable_registry.all_models) == 7

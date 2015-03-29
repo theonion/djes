@@ -74,6 +74,10 @@ class IndexableManager(models.Manager):
 
         return Search().using(client).index(*indexes).doc_type(**model_callbacks)
 
+    def refresh(self):
+        client = connections.get_connection("default")
+        client.indices.refresh(index=self.model.mapping.index)
+
 
 class Indexable(models.Model):
     """an abstract django model to tie in elasticsearch capabilities
