@@ -101,6 +101,8 @@ class Indexable(models.Model):
 
             attribute = getattr(self, key)
 
+            field = self.mapping.properties.properties[key]
+
             # First we check it this is a manager, in which case we have many related objects
             if isinstance(attribute, models.Manager):
                 if issubclass(attribute.model, Indexable):
@@ -112,6 +114,8 @@ class Indexable(models.Model):
                 out[key] = attribute()
             elif isinstance(attribute, Indexable):
                 out[key] = attribute.to_dict()
+            elif hasattr(field, "to_es"):
+                out[key] = field.to_es(attribute)
             else:
                 out[key] = attribute
         return out

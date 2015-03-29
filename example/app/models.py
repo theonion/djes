@@ -5,6 +5,31 @@ from djes.models import Indexable
 from elasticsearch_dsl import field
 
 
+class ColorField(field.Object):
+    """Just a sample custom field. In this case, a CharField that's formatted
+    something like "#FFDDEE"."""
+
+    def __init__(self, *args, **kwargs):
+        super(ColorField, self).__init__(*args, **kwargs)
+        self.properties["red"] = field.construct_field("string")
+        self.properties["green"] = field.construct_field("string")
+        self.properties["blue"] = field.construct_field("string")
+
+    def to_es(self, data):
+        red = data[1:3]
+        green = data[3:5]
+        blue = data[5:7]
+
+        return {
+            "red": red,
+            "green": green,
+            "blue": blue
+        }
+
+    def to_python(self, data):
+        return "#{red}{green}{blue}".format(**data)
+
+
 class SimpleObject(Indexable):
 
     foo = models.IntegerField()
@@ -23,6 +48,14 @@ class ManualMappingObject(SimpleObject):
             excludes = ("garbage",)
 
         bar = field.String(fields={"raw": field.String(index="not_analyzed")})
+
+
+class CustomFieldObject(Indexable):
+
+    color = models.CharField(max_length=7)
+
+    class Mapping:
+        color = ColorField()
 
 
 class RelatedSimpleObject(models.Model):

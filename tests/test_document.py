@@ -19,6 +19,21 @@ def test_simple(es_client):
 
 
 @pytest.mark.django_db
+def test_custom_field(es_client):
+    test = CustomFieldObject.objects.create(
+        color="#008E50"
+    )
+    assert test.to_dict() == {
+        "id": test.id,
+        "color": {
+            "red": "00",
+            "green": "8E",
+            "blue": "50"
+        }
+    }
+
+
+@pytest.mark.django_db
 def test_relatable(es_client):
     simple = RelatedSimpleObject.objects.create(datums="Some datums")
     nested = RelatedNestedObject.objects.create(denormalized_datums="Some denormalized datums")

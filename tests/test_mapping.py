@@ -1,6 +1,6 @@
 from example.app.models import (
     SimpleObject, ManualMappingObject, RelatableObject,
-    RelationsTestObject)
+    RelationsTestObject, CustomFieldObject)
 
 
 def test_simple():
@@ -41,6 +41,28 @@ def test_manual():
                 "baz": {"index": "not_analyzed", "type": "string"},
                 "qux": {"type": "string"},
                 "simpleobject_ptr_id": {"type": "long"},
+            }
+        }
+    }
+
+
+def test_custom():
+    assert CustomFieldObject.mapping.to_dict() == {
+        "app_customfieldobject": {
+            "_id": {
+                "path": "id"
+            },
+            "dynamic": "strict",
+            "properties": {
+                "id": {"type": "long"},
+                "color": {
+                    "type": "object",
+                    "properties": {
+                        "red": {"type": "string"},
+                        "green": {"type": "string"},
+                        "blue": {"type": "string"}
+                    }
+                },
             }
         }
     }
