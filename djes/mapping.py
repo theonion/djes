@@ -12,7 +12,8 @@ FIELD_MAPPINGS = {
     "TextField": {"type": "string"},
     "SlugField": {"type": "string", "index": "not_analyzed"},
     "DateTimeField": {"type": "date"},
-    "DateField": {"type": "date"}
+    "DateField": {"type": "date"},
+    "BooleanField": {"type": "boolean"}
 }
 
 
