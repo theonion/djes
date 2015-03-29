@@ -30,7 +30,7 @@ class DjangoMapping(Mapping):
         excludes = getattr(self.Meta, "excludes", [])
 
         # First, let's get any many-to-many relations
-        for field in self.model._meta.local_many_to_many:
+        for field in self.model._meta.many_to_many:
             db_column, attname = field.get_attname_column()
 
             manual_field_mapping = getattr(self, attname, None)
