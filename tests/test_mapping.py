@@ -1,6 +1,8 @@
+from djes.apps import get_first_mapping
 from example.app.models import (
     SimpleObject, ManualMappingObject, RelatableObject,
-    RelationsTestObject, CustomFieldObject)
+    RelationsTestObject, CustomFieldObject, ChildObject,
+    GrandchildObject)
 
 
 def test_simple():
@@ -66,6 +68,13 @@ def test_custom():
             }
         }
     }
+
+
+def test_inheritance():
+
+    assert get_first_mapping(SimpleObject) is None
+    assert get_first_mapping(ChildObject) == ChildObject.Mapping
+    assert get_first_mapping(GrandchildObject) == ChildObject.Mapping
 
 
 def test_related():

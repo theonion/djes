@@ -6,6 +6,18 @@ from .conf import settings
 from elasticsearch_dsl.connections import connections
 
 
+def get_first_mapping(cls):
+    """This allows for Django-like inheritance of mapping configurations"""
+
+    if hasattr(cls, "from_es") and hasattr(cls, "Mapping"):
+        return cls.Mapping
+    for base in cls.__bases__:
+        mapping = get_first_mapping(base)
+        if mapping:
+            return mapping
+    return None
+
+
 class IndexableRegistry(object):
     """Contains information about all PolymorphicIndexables in the project."""
     def __init__(self):
@@ -13,32 +25,33 @@ class IndexableRegistry(object):
         self.families = {}
         self.indexes = {}
 
-    def register(self, klass):
+    def register(self, cls):
         """Adds a new PolymorphicIndexable to the registry."""
 
         # Get the mapping class for this model
-        if hasattr(klass, "Mapping"):
-            # TODO: Inherit all parent mapping info
-            mapping_klass = type("Mapping", (DjangoMapping, klass.Mapping), {})
+        if hasattr(cls, "Mapping"):
+            mapping_klass = type("Mapping", (DjangoMapping, cls.Mapping), {})
         else:
-            mapping_klass = DjangoMapping
+            mapping_klass = get_first_mapping(cls)
+            if mapping_klass is None:
+                mapping_klass = DjangoMapping
 
         # Cache the mapping instance on the model
-        klass.mapping = mapping_klass(klass)
+        cls.mapping = mapping_klass(cls)
 
         # Now we can get the doc_type
-        doc_type = klass.mapping.doc_type
+        doc_type = cls.mapping.doc_type
 
-        self.all_models[doc_type] = klass
-        base_class = klass.get_base_class()
+        self.all_models[doc_type] = cls
+        base_class = cls.get_base_class()
         if base_class not in self.families:
             self.families[base_class] = {}
-        self.families[base_class][doc_type] = klass
+        self.families[base_class][doc_type] = cls
 
-        if klass.mapping.index not in self.indexes:
-            self.indexes[klass.mapping.index] = []
+        if cls.mapping.index not in self.indexes:
+            self.indexes[cls.mapping.index] = []
 
-        self.indexes[klass.mapping.index].append(klass)
+        self.indexes[cls.mapping.index].append(cls)
 
 
 indexable_registry = IndexableRegistry()

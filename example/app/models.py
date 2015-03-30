@@ -50,6 +50,19 @@ class ManualMappingObject(SimpleObject):
         bar = field.String(fields={"raw": field.String(index="not_analyzed")})
 
 
+class ChildObject(SimpleObject):
+
+    trash = models.TextField()
+
+    class Mapping:
+        trash = field.String(analyzer="snowball")
+
+
+class GrandchildObject(ChildObject):
+
+    qux = models.URLField()
+
+
 class CustomFieldObject(Indexable):
 
     color = models.CharField(max_length=7)
