@@ -9,6 +9,19 @@ from .apps import indexable_registry
 from .factory import shallow_class_factory
 
 
+class LazySearch(Search):
+    """This extends the base Search object, allowing for Django-like lazy execution"""
+
+    def __len__(self):
+        return self.count()
+
+    def __getitem__(self, n):
+        if isinstance(n, int):
+            return self.execute()[n]
+
+        return super(LazySearch, self).__getitem__(n)
+
+
 class IndexableManager(models.Manager):
     """a custom manager class to handle integration of native django models and elasticsearch storage
     """
@@ -72,7 +85,7 @@ class IndexableManager(models.Manager):
             model_callbacks[self.model.mapping.doc_type] = self.model.from_es
             indexes.append(self.model.mapping.index)
 
-        return Search().using(client).index(*indexes).doc_type(**model_callbacks)
+        return LazySearch().using(client).index(*indexes).doc_type(**model_callbacks)
 
     def refresh(self):
         client = connections.get_connection("default")

@@ -18,6 +18,7 @@ class IndexableRegistry(object):
 
         # Get the mapping class for this model
         if hasattr(klass, "Mapping"):
+            # TODO: Inherit all parent mapping info
             mapping_klass = type("Mapping", (DjangoMapping, klass.Mapping), {})
         else:
             mapping_klass = DjangoMapping
