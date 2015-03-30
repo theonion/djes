@@ -153,6 +153,12 @@ class Indexable(models.Model):
 
     @classmethod
     def get_base_class(cls):
-        while cls.__bases__ and cls.__bases__[0] != Indexable:
-            cls = cls.__bases__[0]
-        return cls
+        if cls.__bases__:
+            for base in cls.__bases__:
+                if base == Indexable:
+                    return cls
+                elif hasattr(base, "get_base_class"):
+                    base_base = base.get_base_class()
+                    if base_base:
+                        return base_base
+        return None
