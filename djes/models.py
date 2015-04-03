@@ -1,12 +1,20 @@
 from django.db import models
-
-from elasticsearch_dsl.connections import connections
-from elasticsearch_dsl import Search
 from elasticsearch.exceptions import NotFoundError
+from elasticsearch_dsl import Search
+from elasticsearch_dsl.connections import connections
+from elasticsearch_dsl.result import Response
 
 from .apps import indexable_registry
-
 from .factory import shallow_class_factory
+
+
+class DjangoElasticResponse(Response):
+
+    def count(self):
+        return self.hits.total
+
+    def __len__(self):
+        return self.hits.total
 
 
 class LazySearch(Search):
@@ -20,6 +28,23 @@ class LazySearch(Search):
             return self.execute()[n]
 
         return super(LazySearch, self).__getitem__(n)
+
+    def execute(self):
+        """
+        Execute the search and return an instance of ``Response`` wrapping all
+        the data.
+        """
+        es = connections.get_connection(self._using)
+
+        return DjangoElasticResponse(
+            es.search(
+                index=self._index,
+                doc_type=self._doc_type,
+                body=self.to_dict(),
+                **self._params
+            ),
+            callbacks=self._doc_type_map
+        )
 
 
 class IndexableManager(models.Manager):
