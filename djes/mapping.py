@@ -47,9 +47,9 @@ class DjangoMapping(Mapping):
                 related_properties = field.rel.to.mapping.properties.properties.to_dict()
                 self.field(field.name, {"type": "nested", "properties": related_properties})
                 continue
-            else:
-                # If it's not, let's just use a long
-                self.field(db_column or attname, {"type": "long"})
+            # else:
+            #     # If it's not, let's just use a long
+            #     self.field(db_column or attname, {"type": "long"})
 
     def __init__(self, model):
         # Avoiding circular import
