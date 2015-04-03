@@ -104,7 +104,8 @@ class IndexableManager(models.Manager):
             for doc_type, cls in indexable_registry.families[self.model].items():
 
                 model_callbacks[doc_type] = cls.from_es
-                indexes.append(cls.mapping.index)
+                if cls.mapping.index not in indexes:
+                    indexes.append(cls.mapping.index)
         else:
             # Just this one!
             model_callbacks[self.model.mapping.doc_type] = self.model.from_es
@@ -165,7 +166,7 @@ class Indexable(models.Model):
     def index(self, refresh=False):
         """Indexes this object"""
         es = connections.get_connection("default")
-        es.index(self.mapping.index, self.mapping.doc_type, body=self.to_dict(), refresh=refresh)
+        es.index(self.mapping.index, self.mapping.doc_type, id=self.pk, body=self.to_dict(), refresh=refresh)
 
     @classmethod
     def from_es(cls, hit):
