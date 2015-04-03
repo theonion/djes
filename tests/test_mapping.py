@@ -25,7 +25,7 @@ def test_simple():
 
 def test_manual():
     assert ManualMappingObject.mapping.doc_type == "super_manual_mapping"
-    assert ManualMappingObject.mapping.to_dict() == {
+    assert {
         "super_manual_mapping": {
             "_id": {
                 "path": "simpleobject_ptr"
@@ -42,10 +42,11 @@ def test_manual():
                 },
                 "baz": {"index": "not_analyzed", "type": "string"},
                 "qux": {"type": "string"},
+                "status": {"index": "not_analyzed", "type": "string"},
                 "simpleobject_ptr_id": {"type": "long"},
             }
         }
-    }
+    } == ManualMappingObject.mapping.to_dict()
 
 
 def test_custom():
@@ -110,7 +111,6 @@ def test_many_to_many():
             "properties": {
                 "id": {"type": "long"},
                 "data": {"type": "string"},
-                "dumb_tags": {"type": "long"},
                 "tags": {
                     "type": "nested",
                     "properties": {

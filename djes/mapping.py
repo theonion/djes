@@ -1,5 +1,6 @@
 from django.db import models
 from elasticsearch_dsl.mapping import Mapping
+from elasticsearch_dsl.field import Field
 
 from djes.conf import settings
 
@@ -73,7 +74,7 @@ class DjangoMapping(Mapping):
         # First, let's get any many-to-many relations
         self._build_m2m_fields()
 
-        # Now the rest of the fields
+        # Now the rest of the Django fields
         for field, model in self.model._meta.get_fields_with_model():
             db_column, attname = field.get_attname_column()
 
@@ -104,6 +105,12 @@ class DjangoMapping(Mapping):
                 self.field(db_column or attname, field_args)
             else:
                 raise Warning("Can't find {}".format(field.get_internal_type()))
+
+        # Now any custom fields
+        for field in dir(self.__class__):
+            manual_field_mapping = getattr(self, field)
+            if field not in self.properties.properties.to_dict() and isinstance(manual_field_mapping, Field):
+                self.field(field, manual_field_mapping)
 
         self.properties._params["_id"] = {"path": self.model._meta.pk.name}
         if getattr(self.Meta, "dynamic", "strict") == "strict":
