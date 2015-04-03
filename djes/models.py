@@ -9,7 +9,6 @@ from .factory import shallow_class_factory
 
 
 class DjangoElasticResponse(Response):
-
     def count(self):
         return self.hits.total
 
@@ -36,15 +35,11 @@ class LazySearch(Search):
         """
         es = connections.get_connection(self._using)
 
-        return DjangoElasticResponse(
-            es.search(
-                index=self._index,
-                doc_type=self._doc_type,
-                body=self.to_dict(),
-                **self._params
-            ),
-            callbacks=self._doc_type_map
-        )
+        return DjangoElasticResponse(es.search(index=self._index,
+                                               doc_type=self._doc_type,
+                                               body=self.to_dict(),
+                                               **self._params),
+                                     callbacks=self._doc_type_map)
 
 
 class IndexableManager(models.Manager):
@@ -80,14 +75,10 @@ class IndexableManager(models.Manager):
         doc_type = self.model.mapping.doc_type
         index = self.model.mapping.index
         try:
-            doc = es.get(
-                index=index,
-                doc_type=doc_type,
-                id=id,
-                **kwargs
-            )
+            doc = es.get(index=index, doc_type=doc_type, id=id, **kwargs)
         except NotFoundError:
-            message = "Can't find a document for {}, using id {}".format(doc_type, id)
+            message = "Can't find a document for {}, using id {}".format(
+                doc_type, id)
             raise self.model.DoesNotExist(message)
 
         # parse and return
@@ -111,7 +102,8 @@ class IndexableManager(models.Manager):
             model_callbacks[self.model.mapping.doc_type] = self.model.from_es
             indexes.append(self.model.mapping.index)
 
-        return LazySearch().using(client).index(*indexes).doc_type(**model_callbacks)
+        return LazySearch().using(client).index(*indexes).doc_type(
+            **model_callbacks)
 
     def refresh(self):
         client = connections.get_connection("default")
@@ -166,7 +158,10 @@ class Indexable(models.Model):
     def index(self, refresh=False):
         """Indexes this object"""
         es = connections.get_connection("default")
-        es.index(self.mapping.index, self.mapping.doc_type, id=self.pk, body=self.to_dict(), refresh=refresh)
+        es.index(self.mapping.index, self.mapping.doc_type,
+                 id=self.pk,
+                 body=self.to_dict(),
+                 refresh=refresh)
 
     @classmethod
     def from_es(cls, hit):
