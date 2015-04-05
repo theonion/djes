@@ -124,9 +124,10 @@ class Indexable(models.Model):
     objects = models.Manager()
     search_objects = IndexableManager()
 
-    def save(self, *args, **kwargs):
+    def save(self, index=True, *args, **kwargs):
         super(Indexable, self).save(*args, **kwargs)
-        self.index()
+        if index:
+            self.index()
 
     def to_dict(self):
         """converts the django model's fields to an elasticsearch mapping
