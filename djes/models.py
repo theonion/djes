@@ -46,6 +46,13 @@ class IndexableManager(models.Manager):
     """a custom manager class to handle integration of native django models and elasticsearch storage
     """
 
+    @property
+    def client(self):
+        if not hasattr(self, "_client"):
+            self._client = connections.get_connection("default")
+        return self._client
+    
+
     def get(self, **kwargs):
         """gets a specific document from elasticsearch
 
@@ -85,8 +92,6 @@ class IndexableManager(models.Manager):
         return self.model.from_es(doc)
 
     def search(self):
-        client = connections.get_connection("default")
-
         model_callbacks = {}
         indexes = []
 
@@ -102,12 +107,11 @@ class IndexableManager(models.Manager):
             model_callbacks[self.model.mapping.doc_type] = self.model.from_es
             indexes.append(self.model.mapping.index)
 
-        return LazySearch().using(client).index(*indexes).doc_type(
-            **model_callbacks)
+        return LazySearch().using(self.client).index(*indexes).doc_type(
+            **model_callbacks)        
 
     def refresh(self):
-        client = connections.get_connection("default")
-        client.indices.refresh(index=self.model.mapping.index)
+        self.client.indices.refresh(index=self.model.mapping.index)
 
 
 class Indexable(models.Model):
