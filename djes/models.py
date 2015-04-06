@@ -32,10 +32,10 @@ class FullResponse(Response):
     def hits(self):
         if not hasattr(self, "_hits"):
             # If this is the first call, we need to cache all the hits with bulk queries
-            h = self._d_["hits"]["hits"]
+            hits = self._d_["hits"]["hits"]
 
             doc_type_map = {}
-            for hit in h:
+            for hit in hits:
                 doc_type = hit["_type"]
                 if doc_type not in doc_type_map:
                     doc_type_map[doc_type] = []
@@ -65,6 +65,11 @@ class LazySearch(Search):
         s = self._clone()
         s._full = True
         s._fields = ["_id"]
+        return s
+
+    def _clone(self):
+        s = super(LazySearch, self)._clone()
+        s._full = getattr(self, "_full", False)
         return s
 
     def execute(self):
