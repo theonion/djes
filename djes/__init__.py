@@ -1,3 +1,3 @@
-__version__ = "0.0.1a1"
+__version__ = "0.0.1a2"
 
 default_app_config = "djes.apps.DJESConfig"
