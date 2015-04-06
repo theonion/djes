@@ -8,12 +8,45 @@ from .apps import indexable_registry
 from .factory import shallow_class_factory
 
 
-class DjangoElasticResponse(Response):
+class ShallowResponse(Response):
     def count(self):
         return self.hits.total
 
     def __len__(self):
         return self.hits.total
+
+class FullResponse(Response):
+
+    def count(self):
+        return self.hits.total
+
+    def __len__(self):
+        return self.hits.total
+
+    def _get_result(self, hit):
+        doc_type = hit['_type']
+        _id = int(hit["_id"])
+        return self._in_bulk[doc_type][_id]
+
+    @property
+    def hits(self):
+        if not hasattr(self, "_hits"):
+            # If this is the first call, we need to cache all the hits with bulk queries
+            h = self._d_["hits"]["hits"]
+
+            doc_type_map = {}
+            for hit in h:
+                doc_type = hit["_type"]
+                if doc_type not in doc_type_map:
+                    doc_type_map[doc_type] = []
+                doc_type_map[doc_type].append(int(hit["_id"]))
+
+            self._in_bulk = {}
+            for doc_type, ids in doc_type_map.items():
+                cls = indexable_registry.all_models[doc_type]
+                self._in_bulk[doc_type] = cls.objects.in_bulk(ids)
+
+        return super(FullResponse, self).hits
 
 
 class LazySearch(Search):
@@ -28,6 +61,12 @@ class LazySearch(Search):
 
         return super(LazySearch, self).__getitem__(n)
 
+    def full(self):
+        s = self._clone()
+        s._full = True
+        s._fields = ["_id"]
+        return s
+
     def execute(self):
         """
         Execute the search and return an instance of ``Response`` wrapping all
@@ -35,11 +74,17 @@ class LazySearch(Search):
         """
         es = connections.get_connection(self._using)
 
-        return DjangoElasticResponse(es.search(index=self._index,
-                                               doc_type=self._doc_type,
-                                               body=self.to_dict(),
-                                               **self._params),
-                                     callbacks=self._doc_type_map)
+        if getattr(self, "_full", False) is False:
+            return ShallowResponse(es.search(index=self._index,
+                                                   doc_type=self._doc_type,
+                                                   body=self.to_dict(),
+                                                   **self._params),
+                                         callbacks=self._doc_type_map)
+        else:
+            return FullResponse(es.search(index=self._index,
+                                                doc_type=self._doc_type,
+                                                body=self.to_dict(),
+                                                **self._params))
 
 
 class IndexableManager(models.Manager):
