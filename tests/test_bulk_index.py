@@ -15,7 +15,7 @@ def test_bulk_index(es_client):
     time.sleep(1)  # Let the index refresh
 
     response = es_client.search(
-        index=SimpleObject.get_mapping().index,
-        doc_type=SimpleObject.get_mapping().doc_type,
+        index=SimpleObject.search_objects.mapping.index,
+        doc_type=SimpleObject.search_objects.mapping.doc_type,
     )
     assert response["hits"]["total"] == 120

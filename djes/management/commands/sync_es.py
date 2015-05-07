@@ -18,7 +18,7 @@ def get_indexes():
             indexes[index]["settings"] = settings.ES_INDEX_SETTINGS[index]
 
         for model in models:
-            indexes[index]["mappings"].update(model.get_mapping().to_dict())
+            indexes[index]["mappings"].update(model.search_objects.mapping.to_dict())
 
     return indexes
 

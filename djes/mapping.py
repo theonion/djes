@@ -67,7 +67,7 @@ class DjangoMapping(Mapping):
 
             if field.get_internal_type() == "ManyToManyField" and hasattr(field.rel.to, "from_es"):
 
-                related_properties = field.rel.to.get_mapping().properties.properties.to_dict()
+                related_properties = field.rel.to.search_objects.mapping.properties.properties.to_dict()
                 self.field(field.name, {"type": "nested", "properties": related_properties})
                 continue
 
@@ -77,7 +77,7 @@ class DjangoMapping(Mapping):
                 # We only want to nest fields when they are indexable, and not parent pointers.
                 if hasattr(field.rel.to, "from_es") and not field.rel.parent_link:
 
-                    related_properties = field.rel.to.get_mapping().properties.properties.to_dict()
+                    related_properties = field.rel.to.search_objects.mapping.properties.properties.to_dict()
                     self.field(field.name, {"type": "nested", "properties": related_properties})
                     continue
 

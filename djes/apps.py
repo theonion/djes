@@ -5,7 +5,6 @@ from .conf import settings
 from elasticsearch_dsl.connections import connections
 
 
-
 class IndexableRegistry(object):
     """Contains information about all PolymorphicIndexables in the project."""
     def __init__(self):
@@ -15,7 +14,7 @@ class IndexableRegistry(object):
 
     def register(self, cls):
         """Adds a new PolymorphicIndexable to the registry."""
-        doc_type = cls.get_mapping().doc_type
+        doc_type = cls.search_objects.mapping.doc_type
 
         self.all_models[doc_type] = cls
         base_class = cls.get_base_class()
@@ -23,10 +22,10 @@ class IndexableRegistry(object):
             self.families[base_class] = {}
         self.families[base_class][doc_type] = cls
 
-        if cls.get_mapping().index not in self.indexes:
-            self.indexes[cls.get_mapping().index] = []
+        if cls.search_objects.mapping.index not in self.indexes:
+            self.indexes[cls.search_objects.mapping.index] = []
 
-        self.indexes[cls.get_mapping().index].append(cls)
+        self.indexes[cls.search_objects.mapping.index].append(cls)
 
 
 indexable_registry = IndexableRegistry()

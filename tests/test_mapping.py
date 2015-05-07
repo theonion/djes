@@ -6,8 +6,8 @@ from example.app.models import (
 
 
 def test_simple():
-    assert SimpleObject.get_mapping().doc_type == "app_simpleobject"
-    assert SimpleObject.get_mapping().to_dict() == {
+    assert SimpleObject.search_objects.mapping.doc_type == "app_simpleobject"
+    assert SimpleObject.search_objects.mapping.to_dict() == {
         "app_simpleobject": {
             "_id": {
                 "path": "id"
@@ -24,7 +24,7 @@ def test_simple():
 
 
 def test_manual():
-    assert ManualMappingObject.get_mapping().doc_type == "super_manual_mapping"
+    assert ManualMappingObject.search_objects.mapping.doc_type == "super_manual_mapping"
     assert {
         "super_manual_mapping": {
             "_id": {
@@ -46,11 +46,11 @@ def test_manual():
                 "simpleobject_ptr_id": {"type": "long"},
             }
         }
-    } == ManualMappingObject.get_mapping().to_dict()
+    } == ManualMappingObject.search_objects.mapping.to_dict()
 
 
 def test_custom():
-    assert CustomFieldObject.get_mapping().to_dict() == {
+    assert CustomFieldObject.search_objects.mapping.to_dict() == {
         "app_customfieldobject": {
             "_id": {
                 "path": "id"
@@ -79,7 +79,7 @@ def test_inheritance():
 
 
 def test_related():
-    assert RelatableObject.get_mapping().to_dict() == {
+    assert RelatableObject.search_objects.mapping.to_dict() == {
         "app_relatableobject": {
             "_id": {
                 "path": "id"
@@ -102,7 +102,7 @@ def test_related():
 
 
 def test_many_to_many():
-    assert RelationsTestObject.get_mapping().to_dict() == {
+    assert RelationsTestObject.search_objects.mapping.to_dict() == {
         "app_relationstestobject": {
             "_id": {
                 "path": "id"

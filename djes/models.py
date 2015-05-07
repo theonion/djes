@@ -28,6 +28,7 @@ class ShallowResponse(Response):
     def __len__(self):
         return self.hits.total
 
+
 class FullResponse(Response):
 
     def count(self):
@@ -115,6 +116,18 @@ class IndexableManager(models.Manager):
             self._client = connections.get_connection("default")
         return self._client
 
+    @property
+    def mapping(self):
+        if not hasattr(self, "_mapping"):
+            if hasattr(self.model, "Mapping"):
+                mapping_klass = type("Mapping", (DjangoMapping, self.model.Mapping), {})
+            else:
+                mapping_klass = get_first_mapping(self.model)
+                if mapping_klass is None:
+                    mapping_klass = DjangoMapping
+            self._mapping = mapping_klass(self.model)
+        return self._mapping
+
     def get(self, **kwargs):
         """gets a specific document from elasticsearch
 
@@ -141,8 +154,8 @@ class IndexableManager(models.Manager):
         # connect to es and retrieve the document
         es = connections.get_connection("default")
 
-        doc_type = self.model.get_mapping().doc_type
-        index = self.model.get_mapping().index
+        doc_type = self.model.search_objects.mapping.doc_type
+        index = self.model.search_objects.mapping.index
         try:
             doc = es.get(index=index, doc_type=doc_type, id=id, **kwargs)
         except NotFoundError:
@@ -162,18 +175,18 @@ class IndexableManager(models.Manager):
             for doc_type, cls in indexable_registry.families[self.model].items():
 
                 model_callbacks[doc_type] = cls.from_es
-                if cls.get_mapping().index not in indexes:
-                    indexes.append(cls.get_mapping().index)
+                if cls.search_objects.mapping.index not in indexes:
+                    indexes.append(cls.search_objects.mapping.index)
         else:
             # Just this one!
-            model_callbacks[self.model.get_mapping().doc_type] = self.model.from_es
-            indexes.append(self.model.get_mapping().index)
+            model_callbacks[self.model.search_objects.mapping.doc_type] = self.model.from_es
+            indexes.append(self.model.search_objects.mapping.index)
 
         return LazySearch().using(self.client).index(*indexes).doc_type(
             **model_callbacks)
 
     def refresh(self):
-        self.client.indices.refresh(index=self.model.get_mapping().index)
+        self.client.indices.refresh(index=self.model.search_objects.mapping.index)
 
 
 class Indexable(models.Model):
@@ -198,12 +211,15 @@ class Indexable(models.Model):
         :rtype: elasticsearch_dsl.mapping.Mapping
         """
         out = {}
-        for key in self.get_mapping().properties.properties:
+
+        fields = self.__class__.search_objects.mapping.properties.properties
+
+        for key in fields:
             # TODO: What if we've mapped the property to a different name? Will we allow that?
 
             attribute = getattr(self, key)
 
-            field = self.get_mapping().properties.properties[key]
+            field = fields[key]
 
             # First we check it this is a manager, in which case we have many related objects
             if isinstance(attribute, models.Manager):
@@ -225,21 +241,12 @@ class Indexable(models.Model):
     def index(self, refresh=False):
         """Indexes this object"""
         es = connections.get_connection("default")
-        es.index(self.get_mapping().index, self.get_mapping().doc_type,
+        index = self.__class__.search_objects.mapping.index
+        doc_type = self.__class__.search_objects.mapping.doc_type
+        es.index(index, doc_type,
                  id=self.pk,
                  body=self.to_dict(),
                  refresh=refresh)
-
-    @classmethod
-    def get_mapping(cls):
-        # TODO: Cache the mapping instance somewhere...
-        if hasattr(cls, "Mapping"):
-            mapping_klass = type("Mapping", (DjangoMapping, cls.Mapping), {})
-        else:
-            mapping_klass = get_first_mapping(cls)
-            if mapping_klass is None:
-                mapping_klass = DjangoMapping
-        return mapping_klass(cls)
 
     @classmethod
     def from_es(cls, hit):
