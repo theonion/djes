@@ -28,7 +28,7 @@ def test_manual():
     assert {
         "super_manual_mapping": {
             "_id": {
-                "path": "simpleobject_ptr_id"
+                "path": "simpleobject_ptr"
             },
             "dynamic": "strict",
             "properties": {
@@ -49,7 +49,7 @@ def test_manual():
     } == ManualMappingObject.get_mapping().to_dict()
 
 
-def _test_custom():
+def test_custom():
     assert CustomFieldObject.get_mapping().to_dict() == {
         "app_customfieldobject": {
             "_id": {
@@ -71,14 +71,14 @@ def _test_custom():
     }
 
 
-def _test_inheritance():
+def test_inheritance():
 
     assert get_first_mapping(SimpleObject) is None
     assert get_first_mapping(ChildObject) == ChildObject.Mapping
     assert get_first_mapping(GrandchildObject) == ChildObject.Mapping
 
 
-def _test_related():
+def test_related():
     assert RelatableObject.get_mapping().to_dict() == {
         "app_relatableobject": {
             "_id": {
@@ -101,7 +101,7 @@ def _test_related():
     }
 
 
-def _test_many_to_many():
+def test_many_to_many():
     assert RelationsTestObject.get_mapping().to_dict() == {
         "app_relationstestobject": {
             "_id": {

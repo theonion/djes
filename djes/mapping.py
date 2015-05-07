@@ -51,7 +51,8 @@ class DjangoMapping(Mapping):
         for field in self.model._meta.get_fields():
 
             if field.auto_created and field.is_relation:
-                continue
+                if not hasattr(field, "rel") or not field.rel.parent_link:
+                    continue
 
             db_column, attname = field.db_column, field.attname
 
