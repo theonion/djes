@@ -1,4 +1,5 @@
 site_name: DJ E.S.
 pages:
   - [index.md, Home]
+  - [license.md, License]
 theme: readthedocs
