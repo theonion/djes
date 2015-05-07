@@ -5,6 +5,6 @@
 ```
     $ virtualenv . && source ./bin/activate  # Or not
     $ pip install -e .
-    $ pip install file://$(pwd)#egg=djes[dev]
-    $ py.test tests/
+    $ pip install "file://$(pwd)#egg=djes[dev]"
+    $ py.test 
 ```
