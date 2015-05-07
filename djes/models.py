@@ -6,6 +6,19 @@ from elasticsearch_dsl.result import Response
 
 from .apps import indexable_registry
 from .factory import shallow_class_factory
+from .mapping import DjangoMapping
+
+
+def get_first_mapping(cls):
+    """This allows for Django-like inheritance of mapping configurations"""
+
+    if hasattr(cls, "from_es") and hasattr(cls, "Mapping"):
+        return cls.Mapping
+    for base in cls.__bases__:
+        mapping = get_first_mapping(base)
+        if mapping:
+            return mapping
+    return None
 
 
 class ShallowResponse(Response):
@@ -217,6 +230,17 @@ class Indexable(models.Model):
                  id=self.pk,
                  body=self.to_dict(),
                  refresh=refresh)
+
+    @classmethod
+    def get_mapping(cls):
+        # TODO: Cache the mapping instance somewhere...
+        if hasattr(cls, "Mapping"):
+            mapping_klass = type("Mapping", (DjangoMapping, cls.Mapping), {})
+        else:
+            mapping_klass = get_first_mapping(cls)
+            if mapping_klass is None:
+                mapping_klass = DjangoMapping
+        return mapping_klass(cls)
 
     @classmethod
     def from_es(cls, hit):
