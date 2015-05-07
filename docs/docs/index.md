@@ -3,12 +3,6 @@ DJ E.S.
 
 `djes` allows easy indexing and searching of your DJango models, using [`elasticsearch-dsl-py`](https://github.com/elastic/elasticsearch-py/)
 
-Look how easy it is to use:
-
-    import project
-    # Get your stuff done
-    project.do_stuff()
-
 Installation
 ------------
 
