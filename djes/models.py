@@ -114,7 +114,6 @@ class IndexableManager(models.Manager):
         if not hasattr(self, "_client"):
             self._client = connections.get_connection("default")
         return self._client
-    
 
     def get(self, **kwargs):
         """gets a specific document from elasticsearch
@@ -142,8 +141,8 @@ class IndexableManager(models.Manager):
         # connect to es and retrieve the document
         es = connections.get_connection("default")
 
-        doc_type = self.model.mapping.doc_type
-        index = self.model.mapping.index
+        doc_type = self.model.get_mapping().doc_type
+        index = self.model.get_mapping().index
         try:
             doc = es.get(index=index, doc_type=doc_type, id=id, **kwargs)
         except NotFoundError:
@@ -163,18 +162,18 @@ class IndexableManager(models.Manager):
             for doc_type, cls in indexable_registry.families[self.model].items():
 
                 model_callbacks[doc_type] = cls.from_es
-                if cls.mapping.index not in indexes:
-                    indexes.append(cls.mapping.index)
+                if cls.get_mapping().index not in indexes:
+                    indexes.append(cls.get_mapping().index)
         else:
             # Just this one!
-            model_callbacks[self.model.mapping.doc_type] = self.model.from_es
-            indexes.append(self.model.mapping.index)
+            model_callbacks[self.model.get_mapping().doc_type] = self.model.from_es
+            indexes.append(self.model.get_mapping().index)
 
         return LazySearch().using(self.client).index(*indexes).doc_type(
-            **model_callbacks)        
+            **model_callbacks)
 
     def refresh(self):
-        self.client.indices.refresh(index=self.model.mapping.index)
+        self.client.indices.refresh(index=self.model.get_mapping().index)
 
 
 class Indexable(models.Model):
@@ -199,12 +198,12 @@ class Indexable(models.Model):
         :rtype: elasticsearch_dsl.mapping.Mapping
         """
         out = {}
-        for key in self.mapping.properties.properties:
+        for key in self.get_mapping().properties.properties:
             # TODO: What if we've mapped the property to a different name? Will we allow that?
 
             attribute = getattr(self, key)
 
-            field = self.mapping.properties.properties[key]
+            field = self.get_mapping().properties.properties[key]
 
             # First we check it this is a manager, in which case we have many related objects
             if isinstance(attribute, models.Manager):
@@ -226,7 +225,7 @@ class Indexable(models.Model):
     def index(self, refresh=False):
         """Indexes this object"""
         es = connections.get_connection("default")
-        es.index(self.mapping.index, self.mapping.doc_type,
+        es.index(self.get_mapping().index, self.get_mapping().doc_type,
                  id=self.pk,
                  body=self.to_dict(),
                  refresh=refresh)

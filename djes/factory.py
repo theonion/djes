@@ -63,7 +63,7 @@ def shallow_class_factory(model):
             "_deferred": True,
         }
 
-        for attname, es_field in iteritems(model.mapping.properties._params["properties"]):
+        for attname, es_field in iteritems(model.get_mapping().properties._params["properties"]):
             if type(es_field) == field.Nested:
                 # This is a nested object!
                 dj_field = model._meta.get_field(attname)
