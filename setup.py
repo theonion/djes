@@ -23,13 +23,13 @@ dev_requires = [
     "pytest==2.6.4",
     "pytest-django==2.8.0",
     "pytest-cov==1.8.1",
-    "model_mommy==1.2.3",
+    "model_mommy==1.2.4",
     "coveralls==0.5"
 ]
 
 install_requires = [
     "elasticsearch-dsl==0.0.3",
-    "django>=1.7.1,<1.8"
+    "django>=1.8"
 ]
 
 server_requires = []
