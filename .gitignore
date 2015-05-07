@@ -54,9 +54,6 @@ coverage.xml
 *_config.py
 *.sqlite3
 
-# Sphinx documentation
-docs/site/
-
 # Platform / OS
 .DS_Store
 Thunbs.db
