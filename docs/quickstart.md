@@ -1,0 +1,62 @@
+Quickstart
+==========
+
+Requirements
+------------
+
+`djes` requires:
+
+  - Django >= 1.8
+  - elasticsearch-dsl-py >= 0.0.4
+  - Python 2.7, 3.3 or 3.4
+
+Installation
+------------
+
+You can install `djes` from PyPi:
+
+    $ pip install djes
+
+Next, just add `djes` to your `INSTALLED_APPS`:
+
+    INSTALLED_APPS += (
+        'djes',
+    )
+
+Making Your Models Indexable
+----------------------------
+
+In order to make a model Indexable, just extend from `Indexable`, instead of Django's `model.Model`, like so:
+
+    from djes.models import Indexable
+
+    class SimpleObject(Indexable):
+        foo = models.IntegerField()
+
+Syncing Your Mappings
+--------------------
+
+Now that youve setup some models, save the mappings to Elasticsearch, using the mangement command `sync_es`:
+
+    python manage.py sync_es
+
+Searching
+---------
+
+In order to use Elasticsearch, instead of your database, just use the `search_objects` manager, like so:
+
+    >>> SimpleObject.objects.create(foo=2)
+    <SimpleObject: SimpleObject object>
+    >>> SimpleObject.search_objects.search().filter('term', foo=2)
+    <djes.models.LazySearch object at 0x1040b3c10>
+    >>> SimpleObject.search_objects.search().filter('term', foo=2).count()
+    1
+    >>> SimpleObject.search_objects.search().filter('term', foo=1)[0].foo
+    2
+
+This manager returns "shallow" versions of your Django model. Specifically, it might leave off some fields (depending or your indexing), and the `save()` method will be unavilable. If you want to get full Django objects, you can chain the `.full()` method, like so:
+
+    >>> SimpleObject.search_objects.search().filter('term', foo=1).full()[0]
+    <SimpleObject: SimpleObject object>
+
+Note that this will have a performance impact, as you are performing an Elasticsearch query, and then at least one database query.

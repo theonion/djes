@@ -1,20 +1,14 @@
 DJ E.S.
 ========
 
-`djes` allows easy indexing and searching of your DJango models, using [`elasticsearch-dsl-py`](https://github.com/elastic/elasticsearch-py/)
+`djes` allows easy indexing and searching of your Django models, using [`elasticsearch-dsl-py`](https://github.com/elastic/elasticsearch-py/).
 
-Installation
-------------
-
-Install `djes` by running:
-
-    pip install djes
 
 Contribute
 ----------
 
-- Issue Tracker: github.com/theonion/djes/issues
-- Source Code: github.com/theonion/djes
+- Issue Tracker: [http://github.com/theonion/djes/issues](http://github.com/theonion/djes/issues)
+- Source Code: [http://github.com/theonion/djes](http://github.com/theonion/djes)
 
 License
 -------
