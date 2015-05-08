@@ -42,20 +42,10 @@ class IndexableManager(models.Manager):
         doc = hit.copy()
         klass = shallow_class_factory(self.model)
 
-        # We can pass in the entire source, except in the case that we have a many-to-many
-        local_many_to_many_fields = {}
-        for field in self.model._meta.local_many_to_many:
-            local_many_to_many_fields[field.get_attname_column()[1]] = field
-
-        to_be_deleted = []
-        for name, value in doc["_source"].items():
-            if name in local_many_to_many_fields:
-                field = local_many_to_many_fields[name]
-                if not issubclass(field.rel.to, Indexable):
-                    to_be_deleted.append(name)
-
-        for name in to_be_deleted:
-            del doc["_source"][name]
+        # We can pass in the entire source, except when we have a non-indexable many-to-many
+        for field in self.model._meta.get_fields():
+            if field.many_to_many and not issubclass(field.rel.to, Indexable):
+                del doc["_source"][field.name]
 
         return klass(**doc["_source"])
 

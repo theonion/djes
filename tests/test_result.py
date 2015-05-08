@@ -38,7 +38,6 @@ def test_related_get(es_client):
     management.call_command("sync_es")
 
     test_object = mommy.make(RelatableObject)
-    time.sleep(1)  # Let the index refresh
 
     from_es = RelatableObject.search_objects.get(id=test_object.id)
     assert from_es.__class__.__name__ == "RelatableObject_ElasticSearchResult"
@@ -61,8 +60,7 @@ def test_m2m(es_client):
     test_object = mommy.make(RelationsTestObject, make_m2m=False)
     test_object.tags.add(*tags)
     test_object.dumb_tags.add(*dumb_tags)
-    test_object.index()
-    time.sleep(1)  # Let the index refresh
+    test_object.index()  # Reindex now that we've added tags...
 
     from_es = RelationsTestObject.search_objects.get(id=test_object.id)
     assert from_es.__class__.__name__ == "RelationsTestObject_ElasticSearchResult"
