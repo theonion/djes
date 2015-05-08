@@ -45,14 +45,14 @@ Searching
 
 In order to use Elasticsearch, instead of your database, just use the `search_objects` manager, like so:
 
-    >>> SimpleObject.objects.create(foo=2)
+    >>> SimpleObject.objects.create(foo=666)
     <SimpleObject: SimpleObject object>
-    >>> SimpleObject.search_objects.search().filter('term', foo=2)
-    <djes.models.LazySearch object at 0x1040b3c10>
-    >>> SimpleObject.search_objects.search().filter('term', foo=2).count()
+    >>> SimpleObject.search_objects.search().filter('term', foo=666).count()
     1
-    >>> SimpleObject.search_objects.search().filter('term', foo=1)[0].foo
-    2
+    >>> SimpleObject.search_objects.search().filter('term', foo=666)[0]
+    <SimpleObject_ElasticSearchResult: SimpleObject_ElasticSearchResult object>
+    >>> SimpleObject.search_objects.search().filter('term', foo=666)[0].foo
+    666
 
 This manager returns "shallow" versions of your Django model. Specifically, it might leave off some fields (depending or your indexing), and the `save()` method will be unavilable. If you want to get full Django objects, you can chain the `.full()` method, like so:
 
