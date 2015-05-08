@@ -23,6 +23,14 @@ Next, just add `djes` to your `INSTALLED_APPS`:
         'djes',
     )
 
+By default, `djes` uses `localhost:9200` as the location of your Elasticsearch server, but this can be customized using the `ES_CONNECTIONS` settings attribute.
+
+    ES_CONNECTIONS = {
+        "default": {
+            "hosts": "192.168.1.143:9200"
+        }
+    }
+
 Making Your Models Indexable
 ----------------------------
 

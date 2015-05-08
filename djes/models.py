@@ -14,12 +14,19 @@ class IndexableManager(models.Manager):
 
     @property
     def client(self):
+        """Get an elasticsearch client
+        """
         if not hasattr(self, "_client"):
             self._client = connections.get_connection("default")
         return self._client
 
     @property
     def mapping(self):
+        """Get a mapping class for this model
+
+        This method will return a Mapping class for your model, generating it using settings from a
+        `Mapping` class on your model (if one exists). The generated class is cached on the manager.
+        """
         if not hasattr(self, "_mapping"):
             if hasattr(self.model, "Mapping"):
                 mapping_klass = type("Mapping", (DjangoMapping, self.model.Mapping), {})
@@ -31,16 +38,7 @@ class IndexableManager(models.Manager):
         return self._mapping
 
     def get(self, **kwargs):
-        """gets a specific document from elasticsearch
-
-        :return: the result of the search
-        :rtype: dict
-
-        :keyword id: the id of the model/document
-        :type id: int or str
-
-        :keyword pk: the id of the model/document
-        :type pd: int or str
+        """Get a object from Elasticsearch by id
         """
         # get the doc id
         id = None
@@ -69,6 +67,8 @@ class IndexableManager(models.Manager):
         return self.model.from_es(doc)
 
     def search(self):
+        """
+        """
         model_callbacks = {}
         indexes = []
 
@@ -88,11 +88,13 @@ class IndexableManager(models.Manager):
             **model_callbacks)
 
     def refresh(self):
+        """Force a refresh of the Elasticsearch index
+        """
         self.client.indices.refresh(index=self.model.search_objects.mapping.index)
 
 
 class Indexable(models.Model):
-    """an abstract django model to tie in elasticsearch capabilities
+    """An abstract model that allows indexing and searching features
     """
 
     class Meta(object):
@@ -107,11 +109,7 @@ class Indexable(models.Model):
             self.index()
 
     def to_dict(self):
-        """converts the django model's fields to an elasticsearch mapping
-
-        :return: an elasticsearch mapping
-        :rtype: elasticsearch_dsl.mapping.Mapping
-        """
+        """Get a dictionary representation of this item, formatted for Elasticsearch"""
         out = {}
 
         fields = self.__class__.search_objects.mapping.properties.properties
@@ -141,7 +139,7 @@ class Indexable(models.Model):
         return out
 
     def index(self, refresh=False):
-        """Indexes this object"""
+        """Indexes this object, using a document from `to_dict()`"""
         es = connections.get_connection("default")
         index = self.__class__.search_objects.mapping.index
         doc_type = self.__class__.search_objects.mapping.doc_type
@@ -151,7 +149,8 @@ class Indexable(models.Model):
                  refresh=refresh)
 
     @classmethod
-    def from_es(cls, hit):
+    def from_dict(cls, hit):
+        """Returns a Django model instance, using a document from Elasticsearch"""
         doc = hit.copy()
         klass = shallow_class_factory(cls)
 
