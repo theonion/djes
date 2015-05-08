@@ -1,4 +1,4 @@
-from djes.models import get_first_mapping
+from djes.mapping import get_first_mapping
 from example.app.models import (
     SimpleObject, ManualMappingObject, RelatableObject,
     RelationsTestObject, CustomFieldObject, ChildObject,

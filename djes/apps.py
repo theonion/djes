@@ -36,12 +36,13 @@ class DJESConfig(AppConfig):
     verbose_name = "DJ E.S."
 
     def ready(self):
+        from .models import Indexable
 
         # Let's register all the Indexable models
         for model in apps.get_models():
 
             # If it quacks...
-            if hasattr(model, "from_es"):
+            if issubclass(model, Indexable):
                 meta = getattr(model, "_meta")
                 if meta and not getattr(meta, "abstract"):
                     indexable_registry.register(model)
