@@ -1,24 +1,27 @@
 from django.core import management
 import pytest
 from model_mommy import mommy
-import time
 
-from example.app.models import SimpleObject, ManualMappingObject
+from example.app.models import SimpleObject, ManualMappingObject, Tag
 
 
 @pytest.mark.django_db
-def test_simple_get(es_client):
-
+def test_simple_search(es_client):
     management.call_command("sync_es")
 
     mommy.make(SimpleObject, _quantity=10)
     mommy.make(ManualMappingObject, _quantity=5)
     SimpleObject.search_objects.refresh()
 
-    assert SimpleObject.search_objects.search().count() == 15
-    assert len(SimpleObject.search_objects.search()) == 15
-    assert ManualMappingObject.search_objects.search().count() == 5
-    assert len(ManualMappingObject.search_objects.search()) == 5
+    results = SimpleObject.search_objects.search()
+    assert results.count() == 15
+    assert len(results) == 15
+    assert isinstance(results[0], SimpleObject)
+
+    results = ManualMappingObject.search_objects.search()
+    assert results.count() == 5
+    assert len(results) == 5
+    assert isinstance(results[0], ManualMappingObject)
 
     es_obj = ManualMappingObject.search_objects.search()[0]
     db_obj = ManualMappingObject.objects.get(id=es_obj.id)
@@ -26,8 +29,19 @@ def test_simple_get(es_client):
     assert es_obj.qux == db_obj.qux
     assert es_obj.garbage is None  # This one isn't indexed...
 
-    for obj in SimpleObject.search_objects.search():
-        assert isinstance(obj, SimpleObject)
+
+@pytest.mark.django_db
+def test_tag_search(es_client):
+    management.call_command("sync_es")
+
+    mommy.make(Tag, _quantity=10)
+    Tag.search_objects.refresh()
+
+    tag_results = Tag.search_objects.search()
+    assert tag_results.count() == 10
+    assert len(tag_results) == 10
+    assert isinstance(tag_results[0], Tag)
+
 
 @pytest.mark.django_db
 def test_full_search(es_client):
