@@ -37,6 +37,28 @@ class IndexableManager(models.Manager):
             self._mapping = mapping_klass(self.model)
         return self._mapping
 
+    def from_es(self, hit):
+        """Returns a Django model instance, using a document from Elasticsearch"""
+        doc = hit.copy()
+        klass = shallow_class_factory(self.model)
+
+        # We can pass in the entire source, except in the case that we have a many-to-many
+        local_many_to_many_fields = {}
+        for field in self.model._meta.local_many_to_many:
+            local_many_to_many_fields[field.get_attname_column()[1]] = field
+
+        to_be_deleted = []
+        for name, value in doc["_source"].items():
+            if name in local_many_to_many_fields:
+                field = local_many_to_many_fields[name]
+                if not issubclass(field.rel.to, Indexable):
+                    to_be_deleted.append(name)
+
+        for name in to_be_deleted:
+            del doc["_source"][name]
+
+        return klass(**doc["_source"])
+
     def get(self, **kwargs):
         """Get a object from Elasticsearch by id
         """
@@ -64,7 +86,7 @@ class IndexableManager(models.Manager):
             raise self.model.DoesNotExist(message)
 
         # parse and return
-        return self.model.from_es(doc)
+        return self.from_es(doc)
 
     def search(self):
         """
@@ -76,12 +98,12 @@ class IndexableManager(models.Manager):
             # There are child models...
             for doc_type, cls in indexable_registry.families[self.model].items():
 
-                model_callbacks[doc_type] = cls.from_es
+                model_callbacks[doc_type] = cls.search_objects.from_es
                 if cls.search_objects.mapping.index not in indexes:
                     indexes.append(cls.search_objects.mapping.index)
         else:
             # Just this one!
-            model_callbacks[self.model.search_objects.mapping.doc_type] = self.model.from_es
+            model_callbacks[self.model.search_objects.mapping.doc_type] = self.from_es
             indexes.append(self.model.search_objects.mapping.index)
 
         return LazySearch().using(self.client).index(*indexes).doc_type(
@@ -147,29 +169,6 @@ class Indexable(models.Model):
                  id=self.pk,
                  body=self.to_dict(),
                  refresh=refresh)
-
-    @classmethod
-    def from_dict(cls, hit):
-        """Returns a Django model instance, using a document from Elasticsearch"""
-        doc = hit.copy()
-        klass = shallow_class_factory(cls)
-
-        # We can pass in the entire source, except in the case that we have a many-to-many
-        local_many_to_many_fields = {}
-        for field in cls._meta.local_many_to_many:
-            local_many_to_many_fields[field.get_attname_column()[1]] = field
-
-        to_be_deleted = []
-        for name, value in doc["_source"].items():
-            if name in local_many_to_many_fields:
-                field = local_many_to_many_fields[name]
-                if not hasattr(field.rel.to, "from_es"):
-                    to_be_deleted.append(name)
-
-        for name in to_be_deleted:
-            del doc["_source"][name]
-
-        return klass(**doc["_source"])
 
     @classmethod
     def get_base_class(cls):

@@ -1,5 +1,4 @@
 from django.db import models
-from django.db.models.fields.related import OneToOneRel, ManyToManyRel, ManyToOneRel
 
 from elasticsearch_dsl.mapping import Mapping
 from elasticsearch_dsl.field import Field
@@ -24,8 +23,9 @@ FIELD_MAPPINGS = {
 
 def get_first_mapping(cls):
     """This allows for Django-like inheritance of mapping configurations"""
+    from .models import Indexable
 
-    if hasattr(cls, "from_es") and hasattr(cls, "Mapping"):
+    if issubclass(cls, Indexable) and hasattr(cls, "Mapping"):
         return cls.Mapping
     for base in cls.__bases__:
         mapping = get_first_mapping(base)
@@ -43,8 +43,7 @@ class DjangoMapping(Mapping):
     of many fields on the model, while letting the developer override these settings"""
 
     def __init__(self, model):
-        # Avoiding circular import
-        # from .models import Indexable
+        from .models import Indexable
 
         self.model = model
         if not hasattr(self, "Meta"):
@@ -75,7 +74,7 @@ class DjangoMapping(Mapping):
             if attname in excludes:
                 continue
 
-            if field.get_internal_type() == "ManyToManyField" and hasattr(field.rel.to, "from_es"):
+            if field.get_internal_type() == "ManyToManyField" and issubclass(field.rel.to, Indexable):
 
                 related_properties = field.rel.to.search_objects.mapping.properties.properties.to_dict()
                 self.field(field.name, {"type": "nested", "properties": related_properties})
@@ -85,7 +84,7 @@ class DjangoMapping(Mapping):
                 # This is a related field, so it should maybe be nested?
 
                 # We only want to nest fields when they are indexable, and not parent pointers.
-                if hasattr(field.rel.to, "from_es") and not field.rel.parent_link:
+                if issubclass(field.rel.to, Indexable) and not field.rel.parent_link:
 
                     related_properties = field.rel.to.search_objects.mapping.properties.properties.to_dict()
                     self.field(field.name, {"type": "nested", "properties": related_properties})
