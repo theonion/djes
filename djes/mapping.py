@@ -26,8 +26,6 @@ class EmptyMeta(object):
     pass
 
 
-import pytest
-
 class DjangoMapping(Mapping):
     """A subclass of the elasticsearch_dsl Mapping, allowing the automatic mapping
     of many fields on the model, while letting the developer override these settings"""

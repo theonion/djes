@@ -57,3 +57,6 @@ coverage.xml
 # Platform / OS
 .DS_Store
 Thunbs.db
+
+# Docs
+docs/site
