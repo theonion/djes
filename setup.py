@@ -24,11 +24,12 @@ dev_requires = [
     "pytest-django==2.8.0",
     "pytest-cov==1.8.1",
     "model_mommy==1.2.4",
-    "coveralls==0.5"
+    "coveralls==0.5",
+    "mkdocs==0.12.2"
 ]
 
 install_requires = [
-    "elasticsearch-dsl==0.0.3",
+    "elasticsearch-dsl==0.0.4",
     "django>=1.8"
 ]
 
