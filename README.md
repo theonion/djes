@@ -1,4 +1,5 @@
-# DJ ES [![Build Status](https://travis-ci.org/theonion/djes.svg?branch=master)](https://travis-ci.org/theonion/djes) [![Coverage Status](https://coveralls.io/repos/theonion/djes/badge.svg)](https://coveralls.io/r/theonion/djes)
+# DJ ES [![Build Status](https://travis-ci.org/theonion/djes.svg?branch=master)](https://travis-ci.org/theonion/djes) [![Coverage Status](https://coveralls.io/repos/theonion/djes/badge.svg)](https://coveralls.io/r/theonion/djes) [![Documentation Status](https://readthedocs.org/projects/djes/badge/?version=latest)](https://readthedocs.org/projects/djes/?badge=latest)
+
 
 ## To get started:
 
