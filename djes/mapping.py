@@ -22,6 +22,18 @@ FIELD_MAPPINGS = {
 }
 
 
+def get_first_mapping(cls):
+    """This allows for Django-like inheritance of mapping configurations"""
+
+    if hasattr(cls, "from_es") and hasattr(cls, "Mapping"):
+        return cls.Mapping
+    for base in cls.__bases__:
+        mapping = get_first_mapping(base)
+        if mapping:
+            return mapping
+    return None
+
+
 class EmptyMeta(object):
     pass
 

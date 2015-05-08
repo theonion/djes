@@ -4,20 +4,8 @@ from elasticsearch_dsl.connections import connections
 
 from .apps import indexable_registry
 from .factory import shallow_class_factory
-from .mapping import DjangoMapping
+from .mapping import DjangoMapping, get_first_mapping
 from .search import LazySearch
-
-
-def get_first_mapping(cls):
-    """This allows for Django-like inheritance of mapping configurations"""
-
-    if hasattr(cls, "from_es") and hasattr(cls, "Mapping"):
-        return cls.Mapping
-    for base in cls.__bases__:
-        mapping = get_first_mapping(base)
-        if mapping:
-            return mapping
-    return None
 
 
 class IndexableManager(models.Manager):
