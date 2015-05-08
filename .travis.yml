@@ -6,7 +6,7 @@ services:
   - elasticsearch
 install:
   - travis_retry pip install -e .
-  - travis_retry pip install file://$(pwd)#egg=betty-cropper[dev]
+  - travis_retry pip install file://$(pwd)#egg=djes[dev]
 script:
   - py.test --cov djes --cov-report term-missing
 after_success:
