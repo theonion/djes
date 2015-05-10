@@ -1,6 +1,7 @@
 from django.db import models
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.connections import connections
+from elasticsearch_dsl.field import InnerObject
 
 from .apps import indexable_registry
 from .factory import shallow_class_factory
@@ -46,6 +47,20 @@ class IndexableManager(models.Manager):
         for field in self.model._meta.get_fields():
             if not field.auto_created and field.many_to_many and not issubclass(field.rel.to, Indexable):
                 del doc["_source"][field.name]
+
+        # Now let's go ahead and parse all the fields
+        fields = self.mapping.properties.properties
+        for key in fields:
+            # TODO: What if we've mapped the property to a different name? Will we allow that?
+            field = fields[key]
+
+            if isinstance(field, InnerObject):
+                continue
+
+            if doc["_source"].get(key):
+                attribute_value = doc["_source"][key]
+
+                doc["_source"][key] = field.to_python(attribute_value)
 
         return klass(**doc["_source"])
 

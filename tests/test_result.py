@@ -1,4 +1,5 @@
 from django.core import management
+from django.utils import timezone
 import pytest
 from model_mommy import mommy
 import time
@@ -7,6 +8,23 @@ from example.app.models import SimpleObject, RelatableObject, RelationsTestObjec
 
 
 def test_simple_result():
+    now = timezone.now()
+    hit = {
+        "_source": {
+            "id": 1,
+            "foo": 33,
+            "bar": "Thirty Three",
+            "baz": "thirty-three",
+            "published": now.isoformat()
+        }
+    }
+    test = SimpleObject.search_objects.from_es(hit)
+    assert test.id == 1
+    assert isinstance(test, SimpleObject)
+    assert test.published == now
+
+
+def test_related_result():
     hit = {
         "_source": {
             "id": 123,

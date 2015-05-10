@@ -1,20 +1,25 @@
 import pytest
 from example.app.models import *  # noqa
 from model_mommy import mommy
+from django.utils import timezone
 
 
 @pytest.mark.django_db
 def test_simple(es_client):
+    now = timezone.now()
+
     test = SimpleObject.objects.create(
         foo=1,
         bar="Bar",
-        baz="baz"
+        baz="baz",
+        published=now
     )
     assert test.to_dict() == {
         "id": test.id,
         "foo": 1,
         "bar": "Bar",
-        "baz": "baz"
+        "baz": "baz",
+        "published": now
     }
 
 

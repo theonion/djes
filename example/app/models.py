@@ -35,6 +35,7 @@ class SimpleObject(Indexable):
     foo = models.IntegerField()
     bar = models.CharField(max_length=255)
     baz = models.SlugField()
+    published = models.DateTimeField(null=True, blank=True)
 
 
 class ManualMappingObject(SimpleObject):

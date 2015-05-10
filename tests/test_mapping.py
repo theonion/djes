@@ -17,7 +17,8 @@ def test_simple():
                 "foo": {"type": "long"},
                 "id": {"type": "long"},
                 "bar": {"type": "string"},
-                "baz": {"index": "not_analyzed", "type": "string"}
+                "baz": {"index": "not_analyzed", "type": "string"},
+                "published": {"type": "date"}
             }
         }
     }
@@ -44,6 +45,7 @@ def test_manual():
                 "qux": {"type": "string"},
                 "status": {"index": "not_analyzed", "type": "string"},
                 "simpleobject_ptr_id": {"type": "long"},
+                "published": {"type": "date"}
             }
         }
     } == ManualMappingObject.search_objects.mapping.to_dict()
