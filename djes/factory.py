@@ -15,8 +15,9 @@ class ElasticSearchForeignKey(object):
         self.name = None
 
     def set(self, name, data):
-        self.instance = self.model(**data)
-        self.name = name
+        if data:
+            self.instance = self.model(**data)
+            self.name = name
 
     def get(self, parent_class):
         return self.instance

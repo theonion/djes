@@ -6,6 +6,35 @@ import time
 from example.app.models import SimpleObject, RelatableObject, RelationsTestObject, Tag, DumbTag
 
 
+def test_simple_result():
+    hit = {
+        "_source": {
+            "id": 123,
+            "name": "test",
+            "simple_id": 2,
+            "nested": {
+                "id": 4,
+                "denormalized_datums": "what"
+            }
+        }
+    }
+    test = RelatableObject.search_objects.from_es(hit)
+    assert test.id == 123
+    assert isinstance(test, RelatableObject)
+
+    hit = {
+        "_source": {
+            "id": 123,
+            "name": "test",
+            "simple_id": None,
+            "nested": None
+        }
+    }
+    test = RelatableObject.search_objects.from_es(hit)
+    assert test.id == 123
+    assert isinstance(test, RelatableObject)
+
+
 @pytest.mark.django_db
 def test_simple_get(es_client):
 
