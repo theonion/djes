@@ -175,6 +175,11 @@ class Indexable(models.Model):
                  body=self.to_dict(),
                  refresh=refresh)
 
+    @property
+    def mapping(self):
+        """Returns the proper mapping for this instance"""
+        return self.__class__.search_objects.mapping
+
     @classmethod
     def get_base_class(cls):
         if cls.__bases__:

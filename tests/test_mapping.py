@@ -7,6 +7,7 @@ from example.app.models import (
 
 def test_simple():
     assert SimpleObject.search_objects.mapping.doc_type == "app_simpleobject"
+    assert SimpleObject().mapping.doc_type == "app_simpleobject"
     assert SimpleObject.search_objects.mapping.to_dict() == {
         "app_simpleobject": {
             "_id": {

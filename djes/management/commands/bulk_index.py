@@ -7,11 +7,14 @@ from djes.apps import indexable_registry
 
 def model_iterator(model):
     for obj in model.search_objects.iterator():
-        yield obj.to_dict()
+        yield {
+            "_index": obj.mapping.index,
+            "_type": obj.mapping.doc_type,
+            "_source": obj.to_dict()
+        }
 
 
 def bulk_index(es, index=None, version=1):
-
     if index not in indexable_registry.indexes:
         # Looks like someone is requesting the indexing of something we don't have models for
         return
@@ -24,8 +27,7 @@ def bulk_index(es, index=None, version=1):
     )
 
     for model in indexable_registry.indexes[index]:
-        doc_type = model.search_objects.mapping.doc_type
-        for ok, res in streaming_bulk(es, model_iterator(model), index=vindex, doc_type=doc_type):
+        for ok, res in streaming_bulk(es, model_iterator(model)):
             continue
 
     es.indices.put_settings(
