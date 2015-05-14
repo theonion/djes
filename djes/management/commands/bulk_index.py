@@ -5,10 +5,13 @@ from elasticsearch.helpers import streaming_bulk
 from djes.apps import indexable_registry
 
 
-def model_iterator(model):
+def model_iterator(model, index=None):
+    if index is None:
+        index = model.search_objects.mapping.index
+
     for obj in model.search_objects.iterator():
         yield {
-            "_index": obj.mapping.index,
+            "_index": index,
             "_type": obj.mapping.doc_type,
             "_source": obj.to_dict()
         }
@@ -27,7 +30,7 @@ def bulk_index(es, index=None, version=1):
     )
 
     for model in indexable_registry.indexes[index]:
-        for ok, res in streaming_bulk(es, model_iterator(model)):
+        for ok, res in streaming_bulk(es, model_iterator(model), index=vindex):
             continue
 
     es.indices.put_settings(
