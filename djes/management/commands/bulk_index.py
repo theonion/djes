@@ -30,7 +30,7 @@ def bulk_index(es, index=None, version=1):
     )
 
     for model in indexable_registry.indexes[index]:
-        for ok, res in streaming_bulk(es, model_iterator(model), index=vindex):
+        for ok, res in streaming_bulk(es, model_iterator(model, index=vindex)):
             continue
 
     es.indices.put_settings(
