@@ -102,7 +102,8 @@ class DjangoMapping(Mapping):
             if field not in self.properties.properties.to_dict() and isinstance(manual_field_mapping, Field):
                 self.field(field, manual_field_mapping)
 
-        self.properties._params["_id"] = {"path": self.model._meta.pk.name}
+        pk_path = self.model._meta.pk.db_column or self.model._meta.pk.attname
+        self.properties._params["_id"] = {"path": pk_path}
         if getattr(self.Meta, "dynamic", "strict") == "strict":
             self.properties._params["dynamic"] = "strict"
 

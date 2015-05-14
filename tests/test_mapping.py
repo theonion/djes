@@ -29,7 +29,7 @@ def test_manual():
     assert {
         "super_manual_mapping": {
             "_id": {
-                "path": "simpleobject_ptr"
+                "path": "simpleobject_ptr_id"
             },
             "dynamic": "strict",
             "properties": {
