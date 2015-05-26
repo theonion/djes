@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.utils.encoding import smart_text
 from elasticsearch import TransportError
 from elasticsearch_dsl.connections import connections
 
@@ -7,6 +8,7 @@ from djes.conf import settings
 from djes.management.commands.bulk_index import bulk_index
 
 import copy
+import sys
 
 
 def get_indexes():
@@ -48,8 +50,8 @@ def stringify(data):
             data[key] = stringify(value)
     elif isinstance(data, list):
         return [stringify(item) for item in data]
-    elif not isinstance(data, unicode):
-        return unicode(data)
+    else:
+        return smart_text(data)
 
     return data
 
