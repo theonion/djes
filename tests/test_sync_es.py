@@ -3,7 +3,7 @@ from djes.management.commands.sync_es import get_indexes, sync_index
 
 def test_index_settings():
     indexes = get_indexes()
-    assert indexes["djes-example"]["settings"] == {"index": {"number_of_replicas": "1"}}
+    assert indexes["djes-example"]["settings"]["index"]["number_of_replicas"] == 1
 
 
 def test_sync_index(es_client):
@@ -12,7 +12,22 @@ def test_sync_index(es_client):
     es_client.indices.delete("djes-testing-index_*", ignore=[404])
 
     settings_body = {
-        "settings": {"index": {"number_of_replicas": "1"}},
+        "settings": {
+            "index": {
+                "number_of_replicas": "1",
+                
+                "analysis": {
+                    "analyzer": {
+                        "autocomplete": {
+                            "type": "custom",
+                            "tokenizer": "standard",
+                            "char_filter":  ["html_strip"],
+                            "filter": ["lowercase", "stop", "snowball"]
+                        }
+                    }
+                }
+            },
+        },
         "mappings": {
             "testing": {
                 "properties": {

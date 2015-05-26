@@ -6,6 +6,8 @@ from djes.apps import indexable_registry
 from djes.conf import settings
 from djes.management.commands.bulk_index import bulk_index
 
+import copy
+
 
 def get_indexes():
     indexes = {}
@@ -39,6 +41,19 @@ def build_versioned_index(name, version=1, body=None, old_version=None, should_i
     es.indices.update_aliases(body={"actions": actions})
 
 
+def stringify(data):
+    """Turns all dictionary values into strings"""
+    if isinstance(data, dict):
+        for key, value in data.items():
+            data[key] = stringify(value)
+    elif isinstance(data, list):
+        return [stringify(item) for item in data]
+    elif not isinstance(data, unicode):
+        return unicode(data)
+
+    return data
+
+
 def sync_index(name, body, should_index=False):
     es = connections.get_connection("default")
 
@@ -55,11 +70,45 @@ def sync_index(name, body, should_index=False):
     if "settings" in body:
         settings = es.indices.get_settings(index=index_name)[index_name]["settings"]
 
-        # This is a little hard to understand, but it works. This basically checks if `settings`
-        # is a subset of `body["settings"]` (credit: http://stackoverflow.com/q/9323749/931098)
-        if not all(item in settings.items() for item in body["settings"].items()):
-            # Well, it looks like the settings have changed
-            es.indices.put_settings(index=index_name, body=body["settings"])
+        # Let's take a snapshot of the settings for comparison
+        original_settings = copy.copy(settings["index"])
+
+        # Let's save off the analysis bits, as those are more complex...
+        original_analysis = {}
+        if "analysis" in original_settings:
+            original_analysis = original_settings.pop("analysis")
+
+        original_settings.update(body["settings"]["index"])
+
+        # We want to make sure that all values are strings, in order for easier comparison
+        original_settings = stringify(original_settings)
+
+        # If the index settings have changed, we'll need to PUT an update
+        if original_settings != stringify(settings["index"]):
+            index_body = copy.copy(body["settings"]["index"])
+            if "analysis" in index_body:
+                del index_body["analysis"]
+
+            es.indices.put_settings(index=index_name, body=dict(index=index_body))
+
+        # However, if the analyzers have changed, we'll need to close and reopen...
+        if "analysis" in body["settings"]["index"]:
+            original_analysis.update(body["settings"]["index"]["analysis"])
+            
+            # We want to make sure that all values are strings, in order for easier comparison
+            original_analysis = stringify(original_analysis)
+
+
+            if original_analysis != stringify(settings["index"].get("analysis", {})):
+
+                # We need to close the index before we update analyzers
+                es.indices.close(index=index_name)
+
+                es.indices.put_settings(index=index_name, body=dict(analysis=body["settings"]["analysis"]))
+
+                # Now we re-open
+                es.indices.open(index=index_name)
+
 
     server_mappings = es.indices.get_mapping(index=index_name)[index_name]["mappings"]
 
@@ -72,6 +121,7 @@ def sync_index(name, body, should_index=False):
                     # We need to do this the hard way
                     old_version = int(index_name.split("_")[-1])
                     new_version = old_version + 1
+
                     build_versioned_index(
                         name,
                         version=new_version,
