@@ -8,7 +8,6 @@ from djes.conf import settings
 from djes.management.commands.bulk_index import bulk_index
 
 import copy
-import sys
 
 
 def get_indexes():

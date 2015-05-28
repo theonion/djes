@@ -10,9 +10,6 @@ def test_simple():
     assert SimpleObject().mapping.doc_type == "app_simpleobject"
     assert SimpleObject.search_objects.mapping.to_dict() == {
         "app_simpleobject": {
-            "_id": {
-                "path": "id"
-            },
             "dynamic": "strict",
             "properties": {
                 "foo": {"type": "long"},
@@ -29,9 +26,6 @@ def test_manual():
     assert ManualMappingObject.search_objects.mapping.doc_type == "super_manual_mapping"
     assert {
         "super_manual_mapping": {
-            "_id": {
-                "path": "simpleobject_ptr_id"
-            },
             "dynamic": "strict",
             "properties": {
                 "foo": {"type": "long"},
@@ -55,9 +49,6 @@ def test_manual():
 def test_custom():
     assert CustomFieldObject.search_objects.mapping.to_dict() == {
         "app_customfieldobject": {
-            "_id": {
-                "path": "id"
-            },
             "dynamic": "strict",
             "properties": {
                 "id": {"type": "long"},
@@ -84,9 +75,6 @@ def test_inheritance():
 def test_related():
     assert RelatableObject.search_objects.mapping.to_dict() == {
         "app_relatableobject": {
-            "_id": {
-                "path": "id"
-            },
             "dynamic": "strict",
             "properties": {
                 "id": {"type": "long"},
@@ -107,9 +95,6 @@ def test_related():
 def test_many_to_many():
     assert RelationsTestObject.search_objects.mapping.to_dict() == {
         "app_relationstestobject": {
-            "_id": {
-                "path": "id"
-            },
             "dynamic": "strict",
             "properties": {
                 "id": {"type": "long"},

@@ -11,6 +11,7 @@ def model_iterator(model, index=None):
 
     for obj in model.search_objects.iterator():
         yield {
+            "_id": obj.pk,
             "_index": index,
             "_type": obj.mapping.doc_type,
             "_source": obj.to_dict()
