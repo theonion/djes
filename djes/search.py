@@ -75,16 +75,21 @@ class LazySearch(Search):
         Execute the search and return an instance of ``Response`` wrapping all
         the data.
         """
+        if hasattr(self, "_executed"):
+            return self._executed
+
         es = connections.get_connection(self._using)
 
         if getattr(self, "_full", False) is False:
-            return ShallowResponse(es.search(index=self._index,
+            self._executed = ShallowResponse(es.search(index=self._index,
                                                    doc_type=self._doc_type,
                                                    body=self.to_dict(),
                                                    **self._params),
                                          callbacks=self._doc_type_map)
         else:
-            return FullResponse(es.search(index=self._index,
+            self._executed = FullResponse(es.search(index=self._index,
                                                 doc_type=self._doc_type,
                                                 body=self.to_dict(),
                                                 **self._params))
+
+        return self._executed

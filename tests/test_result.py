@@ -1,10 +1,27 @@
+from django.apps import apps
 from django.core import management
+from django.db.backends import utils
 from django.utils import timezone
-import pytest
+
 from model_mommy import mommy
+import pytest
 import time
 
+from djes.factory import shallow_class_factory
+
 from example.app.models import SimpleObject, RelatableObject, RelationsTestObject, Tag, DumbTag
+
+
+def test_shallow_factory():
+
+    shallow_class = shallow_class_factory(SimpleObject)
+    assert issubclass(shallow_class, SimpleObject)
+
+    name = "{}_ElasticSearchResult".format(SimpleObject.__name__)
+    name = utils.truncate_name(name, 80, 32)
+    # try to get the model from the django registry
+    cached_shallow_class = apps.get_model(SimpleObject._meta.app_label, name)
+    assert cached_shallow_class == shallow_class
 
 
 def test_simple_result():
