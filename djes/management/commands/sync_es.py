@@ -95,10 +95,9 @@ def sync_index(name, body, should_index=False):
         # However, if the analyzers have changed, we'll need to close and reopen...
         if "analysis" in body["settings"]["index"]:
             original_analysis.update(body["settings"]["index"]["analysis"])
-            
+
             # We want to make sure that all values are strings, in order for easier comparison
             original_analysis = stringify(original_analysis)
-
 
             if original_analysis != stringify(settings["index"].get("analysis", {})):
 
@@ -109,7 +108,6 @@ def sync_index(name, body, should_index=False):
 
                 # Now we re-open
                 es.indices.open(index=index_name)
-
 
     server_mappings = es.indices.get_mapping(index=index_name)[index_name]["mappings"]
 

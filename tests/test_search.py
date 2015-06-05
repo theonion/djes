@@ -18,6 +18,8 @@ def test_simple_search(es_client):
     assert len(results) == 15
     assert isinstance(results[0], SimpleObject)
 
+    assert len(results[:3]) == 3
+
     results = ManualMappingObject.search_objects.search()
     assert results.count() == 5
     assert len(results) == 5

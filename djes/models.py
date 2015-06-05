@@ -163,6 +163,9 @@ class Indexable(models.Model):
                 out[key] = field.to_es(attribute)
             else:
                 out[key] = attribute
+
+            if out[key] is None:
+                del out[key]
         return out
 
     def index(self, refresh=False):

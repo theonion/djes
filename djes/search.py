@@ -19,6 +19,8 @@ class FullResponse(Response):
         return self.hits.total
 
     def __len__(self):
+        if 'size' in self._extra:
+            return min(self._extra['size'], self.hits.total)
         return self.hits.total
 
     def _get_result(self, hit):
@@ -51,6 +53,8 @@ class LazySearch(Search):
     """This extends the base Search object, allowing for Django-like lazy execution"""
 
     def __len__(self):
+        if 'size' in self._extra:
+            return min(self._extra['size'], self.count())
         return self.count()
 
     def __getitem__(self, n):

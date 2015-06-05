@@ -5,11 +5,18 @@ from elasticsearch.helpers import streaming_bulk
 from djes.apps import indexable_registry
 
 
-def model_iterator(model, index=None):
+def model_iterator(model, index=None, out=None):
     if index is None:
         index = model.search_objects.mapping.index
 
+    counter = 0
+    total = model.search_objects.count()
+    if out:
+        out.write("Indexing {} {} objects".format(total, model.__name__))
     for obj in model.search_objects.iterator():
+        counter += 1
+        if counter % 100 == 0:
+            out.write("Indexed {}/{} {} objects".format(total, counter, model.__name__))
         yield {
             "_id": obj.pk,
             "_index": index,
@@ -18,7 +25,7 @@ def model_iterator(model, index=None):
         }
 
 
-def bulk_index(es, index=None, version=1):
+def bulk_index(es, index=None, version=1, out=None):
     if index not in indexable_registry.indexes:
         # Looks like someone is requesting the indexing of something we don't have models for
         return
@@ -52,4 +59,4 @@ class Command(BaseCommand):
             index_name = list(alias)[0]
             version = int(index_name.split("_")[-1])
 
-            bulk_index(es, index=index, version=version)
+            bulk_index(es, index=index, version=version, out=self.stdout)
