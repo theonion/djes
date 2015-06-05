@@ -16,7 +16,8 @@ def model_iterator(model, index=None, out=None):
     for obj in model.search_objects.iterator():
         counter += 1
         if counter % 100 == 0:
-            out.write("Indexed {}/{} {} objects".format(total, counter, model.__name__))
+            if out:
+                out.write("Indexed {}/{} {} objects".format(total, counter, model.__name__))
         yield {
             "_id": obj.pk,
             "_index": index,
