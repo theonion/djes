@@ -26,13 +26,20 @@ def get_indexes():
     return indexes
 
 
-def build_versioned_index(name, version=1, body=None, old_version=None, should_index=False):
+def build_versioned_index(name, version=1, body=None, old_version=None, should_index=False, out=None):
     es = connections.get_connection("default")
     versioned_index_name = "{0}_{1:0>4}".format(name, version)
     es.indices.create(index=versioned_index_name, body=body)
 
+    if out:
+        out.write("Creating versioned index \"{}\"".format(versioned_index_name))
+
     if should_index:
         bulk_index(es, index=name, version=version)  # Bulk index here...
+
+
+    if out:
+        out.write("Pointing alias \"{}\" at versioned index \"{}\"".format(name, versioned_index_name))
 
     actions = [{"add": {"index": versioned_index_name, "alias": name}}]
     if old_version is not None:
@@ -55,12 +62,12 @@ def stringify(data):
     return data
 
 
-def sync_index(name, body, should_index=False):
+def sync_index(name, body, should_index=False, out=None):
     es = connections.get_connection("default")
 
     if not es.indices.exists_alias(name=name):
         # We probably haven't synced before, that means we need to create an index, and then alias
-        build_versioned_index(name, body=body, should_index=should_index)
+        build_versioned_index(name, body=body, should_index=should_index, out=out)
         return
 
     # The alias exists, so there's already a version of this index out there
@@ -90,6 +97,9 @@ def sync_index(name, body, should_index=False):
             if "analysis" in index_body:
                 del index_body["analysis"]
 
+            if out:
+                out.write("Updating index settings for \"{}\"".format(index_name))
+
             es.indices.put_settings(index=index_name, body=dict(index=index_body))
 
         # However, if the analyzers have changed, we'll need to close and reopen...
@@ -100,6 +110,9 @@ def sync_index(name, body, should_index=False):
             original_analysis = stringify(original_analysis)
 
             if original_analysis != stringify(settings["index"].get("analysis", {})):
+
+                if out:
+                    out.write("Updating analyzers for \"{}\"".format(index_name))
 
                 # We need to close the index before we update analyzers
                 es.indices.close(index=index_name)
@@ -114,12 +127,19 @@ def sync_index(name, body, should_index=False):
     for doc_type, mapping_body in body["mappings"].items():
         if mapping_body != server_mappings.get(doc_type, {}):
             try:
+                
+                if out:
+                    out.write("Updating mapping for \"{}\"".format(doc_type))
+
                 es.indices.put_mapping(index=index_name, doc_type=doc_type, body=mapping_body)
             except TransportError as e:
                 if "MergeMappingException" in e.error:
                     # We need to do this the hard way
                     old_version = int(index_name.split("_")[-1])
                     new_version = old_version + 1
+
+                    if out:
+                        out.write("Couldn't update mapping for \"{}\", we'll need to build a new index...".format(doc_type))
 
                     build_versioned_index(
                         name,
@@ -140,4 +160,4 @@ class Command(BaseCommand):
         indexes = get_indexes()
 
         for index, body in indexes.items():
-            sync_index(index, body, should_index=True)
+            sync_index(index, body, should_index=True, out=self.stdout)
