@@ -41,7 +41,7 @@ def build_versioned_index(name, version=1, body=None, old_version=None, should_i
         out.write("Creating versioned index \"{}\"".format(versioned_index_name))
 
     if should_index:
-        bulk_index(es, index=name, version=version)  # Bulk index here...
+        bulk_index(es, index=name, version=version, out=out)  # Bulk index here...
 
 
     if out:
