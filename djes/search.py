@@ -61,6 +61,9 @@ class LazySearch(Search):
         if isinstance(n, int):
             return self.execute()[n]
 
+        if not isinstance(n, slice):
+            raise TypeError("List indices must be integers")
+
         return super(LazySearch, self).__getitem__(n)
 
     def full(self):
