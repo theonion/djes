@@ -1,9 +1,9 @@
-from django.conf import settings
 from django.core.management.base import BaseCommand
 from elasticsearch_dsl.connections import connections
 from elasticsearch.helpers import streaming_bulk
 
 from djes.apps import indexable_registry
+from djes.conf import settings
 
 
 def model_iterator(model, index=None, out=None):
@@ -42,7 +42,7 @@ def bulk_index(es, index=None, version=1, out=None):
     for model in indexable_registry.indexes[index]:
 
         identifier = "{}.{}".format(model._meta.app_label, model.__class__.__name__)
-        if identifier in getattr(settings, "DJES_EXCLUDED_MODELS", []):
+        if identifier in settings.DJES_EXCLUDED_MODELS:
             continue
 
         for ok, res in streaming_bulk(es, model_iterator(model, index=vindex, out=out)):

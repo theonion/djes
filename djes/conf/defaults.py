@@ -7,3 +7,5 @@ ES_CONNECTIONS = {
 }
 ES_INDEX = _settings.DATABASES["default"]["NAME"]
 ES_INDEX_SETTINGS = {}
+
+DJES_EXCLUDED_MODELS = []

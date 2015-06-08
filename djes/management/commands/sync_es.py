@@ -24,7 +24,7 @@ def get_indexes():
         for model in models:
 
             identifier = "{}.{}".format(model._meta.app_label, model.__class__.__name__)
-            if identifier in getattr(settings, "DJES_EXCLUDED_MODELS", []):
+            if identifier in settings.DJES_EXCLUDED_MODELS:
                 continue
 
             indexes[index]["mappings"].update(model.search_objects.mapping.to_dict())
