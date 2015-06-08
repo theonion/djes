@@ -19,6 +19,7 @@ def test_simple_search(es_client):
     assert isinstance(results[0], SimpleObject)
 
     assert len(results[:3]) == 3
+    assert len(results[1:4]) == 3
     assert len(results[:20]) == 15
 
     results = ManualMappingObject.search_objects.search()
@@ -58,6 +59,9 @@ def test_full_search(es_client):
     assert len(SimpleObject.search_objects.search().full()) == 15
     assert ManualMappingObject.search_objects.search().full().count() == 5
     assert len(ManualMappingObject.search_objects.search().full()) == 5
+
+    assert len(SimpleObject.search_objects.search().full()[:3]) == 3
+    assert len(SimpleObject.search_objects.search().full()[:20]) == 15
 
     es_obj = ManualMappingObject.search_objects.search().full()[0]
     db_obj = ManualMappingObject.objects.get(id=es_obj.id)
