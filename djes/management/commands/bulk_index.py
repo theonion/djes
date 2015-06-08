@@ -41,7 +41,7 @@ def bulk_index(es, index=None, version=1, out=None):
 
     for model in indexable_registry.indexes[index]:
 
-        identifier = "{}.{}".format(model._meta.app_label, model.__class__.__name__)
+        identifier = "{}.{}".format(model._meta.app_label, model._meta.object_name)
         if identifier in settings.DJES_EXCLUDED_MODELS:
             continue
 
