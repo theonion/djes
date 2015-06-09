@@ -9,38 +9,42 @@ from six import iteritems
 
 class ElasticSearchForeignKey(object):
 
-    def __init__(self, model):
+    def __init__(self, field_name, model):
         self.model = shallow_class_factory(model)
-        self.instance = None
-        self.name = None
+        self.field_name = field_name
 
-    def set(self, name, data):
-        if data:
-            self.instance = self.model(**data)
-            self.name = name
+    def __get__(self, instance, objtype=None):
+        return instance.__dict__.get(self.field_name)
 
-    def get(self, parent_class):
-        return self.instance
+    def __set__(self, instance, value):
+        instance.__dict__[self.field_name] = self.model(**value)
 
 
 class ElasticSearchRelatedManager(object):
-    def __init__(self, model):
-        self.model = shallow_class_factory(model)
-        self.instances = None
-        self.name = None
 
-    def set(self, name, data):
-        self.instances = [self.model(**item_data) for item_data in data]
-        self.name = name
+    def __init__(self, instances):
+        self.instances = instances
 
-    def get(self, parent_class):
-        return self
+    def count(self):
+        return len(self.instances)
 
     def all(self):
         return self.instances
 
-    def count(self):
-        return len(self.instances)
+
+class ElasticSearchManyField(object):
+
+    def __init__(self, field_name, model):
+        self.model = shallow_class_factory(model)
+        self.field_name = field_name
+
+    def __get__(self, instance, objtype=None):
+        if instance is None:
+            return property()
+        return instance.__dict__.get(self.field_name, ElasticSearchRelatedManager([]))
+
+    def __set__(self, instance, value):
+        instance.__dict__[self.field_name] = ElasticSearchRelatedManager([self.model(**item_data) for item_data in value])
 
 
 class Test:
@@ -78,12 +82,10 @@ def shallow_class_factory(model):
                 dj_field = model._meta.get_field(attname)
 
                 if isinstance(dj_field, models.ManyToManyField):
-                    mock_fkey = ElasticSearchRelatedManager(dj_field.rel.to)
-                    overrides[attname] = property(mock_fkey.get, mock_fkey.set)
+                    overrides[attname] = ElasticSearchManyField(attname, dj_field.rel.to)
 
                 if isinstance(dj_field, models.ForeignKey):
                     # Let's add a fake foreignkey attribute
-                    mock_fkey = ElasticSearchForeignKey(dj_field.rel.to)
-                    overrides[attname] = property(mock_fkey.get, mock_fkey.set)
+                    overrides[attname] = ElasticSearchForeignKey(attname, dj_field.rel.to)
 
         return type(str(name), (model,), overrides)
