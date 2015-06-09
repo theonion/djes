@@ -9,7 +9,7 @@ import time
 
 from djes.factory import shallow_class_factory
 
-from example.app.models import SimpleObject, RelatableObject, RelationsTestObject, Tag, DumbTag
+from example.app.models import SimpleObject, RelatableObject, RelationsTestObject, RelatedNestedObject, Tag, DumbTag
 
 
 def test_shallow_factory():
@@ -55,6 +55,7 @@ def test_related_result():
     }
     test = RelatableObject.search_objects.from_es(hit)
     assert test.id == 123
+    assert isinstance(test.nested, RelatedNestedObject)
     assert isinstance(test, RelatableObject)
 
     hit = {
@@ -62,11 +63,11 @@ def test_related_result():
             "id": 123,
             "name": "test",
             "simple_id": None,
-            "nested": None
         }
     }
     test = RelatableObject.search_objects.from_es(hit)
     assert test.id == 123
+    assert test.nested is None
     assert isinstance(test, RelatableObject)
 
 

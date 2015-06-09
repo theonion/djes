@@ -43,6 +43,14 @@ class ElasticSearchRelatedManager(object):
         return len(self.instances)
 
 
+class Test:
+
+    def get(self):
+        pass
+
+    attr = property(get, set)
+
+
 def shallow_class_factory(model):
     if model._deferred:
         model = model._meta.proxy_for_model
