@@ -108,12 +108,22 @@ class RelationsTestObject(Indexable):
     dumb_tags = models.ManyToManyField(DumbTag, related_name="dumb_tags")
 
 
+class SelfRelation(Indexable):
+
+    name = models.CharField(max_length=255)
+    related = models.ForeignKey("self")
+
+    class Mapping:
+        class Meta:
+            excludes = ("related",)
+
+
 class ReverseRelationsParentObject(Indexable):
     name = models.CharField(max_length=255)
 
-    class Mapping(object):
+    class Mapping:
 
-        class Meta(object):
+        class Meta:
             includes = ("children",)
 
 class ReverseRelationsChildObject(Indexable):
@@ -121,7 +131,7 @@ class ReverseRelationsChildObject(Indexable):
     name = models.CharField(max_length=255)
     parent = models.ForeignKey(ReverseRelationsParentObject, related_name="children")
 
-    class Mapping(object):
+    class Mapping:
 
-        class Meta(object):
-            excludes = ("children",)
+        class Meta:
+            excludes = ("parent",)

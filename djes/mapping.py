@@ -73,8 +73,12 @@ class DjangoMapping(Mapping):
                 self.field(db_column or attname, manual_field_mapping)
                 continue
 
-            # Checking to make sure this field hasn't been excluded
-            if attname in excludes:
+            # if self.model._meta.model_name == "reverserelationsparentobject":
+            #     import pdb; pdb.set_trace()
+            # else:
+            #     print(self.model._meta.model_name)
+
+            if field.name in excludes:
                 continue
 
             self.configure_field(field)
@@ -123,8 +127,8 @@ class DjangoMapping(Mapping):
 
         # This is for reverse relations, which do not have a db column
         if field.auto_created and field.is_relation:
-            if isinstance(field, (ForeignObjectRel, ManyToOneRel)) and issubclass(field.to, Indexable):
-                related_properties = field.to.search_objects.mapping.properties.properties.to_dict()
+            if isinstance(field, (ForeignObjectRel, ManyToOneRel)) and issubclass(field.related_model, Indexable):
+                related_properties = field.related_model.search_objects.mapping.properties.properties.to_dict()
                 self.field(field.name, {"type": "nested", "properties": related_properties})
                 return
 
