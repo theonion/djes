@@ -106,3 +106,13 @@ class RelationsTestObject(Indexable):
     data = models.CharField(max_length=255)
     tags = models.ManyToManyField(Tag, related_name="tag")
     dumb_tags = models.ManyToManyField(DumbTag, related_name="dumb_tags")
+
+
+class SelfRelation(Indexable):
+
+    name = models.CharField(max_length=255)
+    related = models.ForeignKey("self")
+
+    class Mapping:
+        class Meta:
+            excludes = ("related",)

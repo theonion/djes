@@ -72,7 +72,13 @@ class DjangoMapping(Mapping):
                 continue
 
             # Checking to make sure this field hasn't been excluded
-            if attname in excludes:
+            # if self.model.__class__.__name__ == "SelfRelation":
+            #     import pdb; pdb.set_trace()
+
+            # if excludes:
+            #     import pdb; pdb.set_trace()
+
+            if field.name in excludes:
                 continue
 
             if field.get_internal_type() == "ManyToManyField" and issubclass(field.rel.to, Indexable):
