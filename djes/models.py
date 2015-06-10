@@ -46,7 +46,7 @@ class IndexableManager(models.Manager):
         # We can pass in the entire source, except when we have a non-indexable many-to-many
         for field in self.model._meta.get_fields():
             if not field.auto_created and field.many_to_many and not issubclass(field.rel.to, Indexable):
-                if field.name in doc.source:
+                if field.name in doc["_source"]:
                     del doc["_source"][field.name]
 
         # Now let's go ahead and parse all the fields
