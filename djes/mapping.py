@@ -68,9 +68,9 @@ class DjangoMapping(Mapping):
 
             db_column, attname = field.db_column, field.attname
 
-            manual_field_mapping = getattr(self, attname, None)
+            manual_field_mapping = getattr(self, field.name, None)
             if manual_field_mapping:
-                self.field(db_column or attname, manual_field_mapping)
+                self.field(field.name, manual_field_mapping)
                 continue
 
             if field.name in excludes:
