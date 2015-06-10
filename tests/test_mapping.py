@@ -2,7 +2,7 @@ from djes.mapping import get_first_mapping
 from example.app.models import (
     SimpleObject, ManualMappingObject, RelatableObject,
     RelationsTestObject, CustomFieldObject, ChildObject,
-    GrandchildObject)
+    GrandchildObject, ReverseRelationsParentObject)
 
 
 def test_simple():
@@ -101,6 +101,24 @@ def test_many_to_many():
                 "data": {"type": "string"},
                 "dumb_tags": {"type": "long"},
                 "tags": {
+                    "type": "nested",
+                    "properties": {
+                        "id": {"type": "long"},
+                        "name": {"type": "string"}
+                    }
+                }
+            }
+        }
+    }
+
+def test_reverse_relations():
+    assert ReverseRelationsParentObject.search_objects.mapping.to_dict() == {
+        "app_reverserelationsparentobject": {
+            "dynamic": "strict",
+            "properties": {
+                "id": {"type": "long"},
+                "name": {"type": "string"},
+                "children": {
                     "type": "nested",
                     "properties": {
                         "id": {"type": "long"},

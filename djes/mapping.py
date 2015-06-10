@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.fields.related import ManyToOneRel, ForeignObjectRel
 
 from elasticsearch_dsl.mapping import Mapping
 from elasticsearch_dsl.field import Field
@@ -56,7 +57,8 @@ class DjangoMapping(Mapping):
         super(DjangoMapping, self).__init__(name)
         self._meta = {}
 
-        excludes = excludes = getattr(self.Meta, "excludes", [])
+        excludes = getattr(self.Meta, "excludes", [])
+        includes = getattr(self.Meta, "includes", [])
 
         for field in self.model._meta.get_fields():
 
@@ -75,27 +77,35 @@ class DjangoMapping(Mapping):
             if attname in excludes:
                 continue
 
-            if field.get_internal_type() == "ManyToManyField" and issubclass(field.rel.to, Indexable):
+            self.configure_field(field)
 
-                related_properties = field.rel.to.search_objects.mapping.properties.properties.to_dict()
-                self.field(field.name, {"type": "nested", "properties": related_properties})
-                continue
+            # if field.get_internal_type() == "ManyToManyField" and issubclass(field.rel.to, Indexable):
 
-            if isinstance(field, models.ForeignKey):
-                # This is a related field, so it should maybe be nested?
+            #     related_properties = field.rel.to.search_objects.mapping.properties.properties.to_dict()
+            #     self.field(field.name, {"type": "nested", "properties": related_properties})
+            #     continue
 
-                # We only want to nest fields when they are indexable, and not parent pointers.
-                if issubclass(field.rel.to, Indexable) and not field.rel.parent_link:
+            # if isinstance(field, models.ForeignKey):
+            #     # This is a related field, so it should maybe be nested?
 
-                    related_properties = field.rel.to.search_objects.mapping.properties.properties.to_dict()
-                    self.field(field.name, {"type": "nested", "properties": related_properties})
-                    continue
+            #     # We only want to nest fields when they are indexable, and not parent pointers.
+            #     if issubclass(field.rel.to, Indexable) and not field.rel.parent_link:
 
-            field_args = FIELD_MAPPINGS.get(field.get_internal_type())
-            if field_args:
-                self.field(db_column or attname, field_args)
-            else:
-                raise Warning("Can't find {}".format(field.get_internal_type()))
+            #         related_properties = field.rel.to.search_objects.mapping.properties.properties.to_dict()
+            #         self.field(field.name, {"type": "nested", "properties": related_properties})
+            #         continue
+
+            # field_args = FIELD_MAPPINGS.get(field.get_internal_type())
+            # if field_args:
+            #     self.field(db_column or attname, field_args)
+            # else:
+            #     raise Warning("Can't find {}".format(field.get_internal_type()))
+
+
+        # Now any included relations
+        for name in includes:
+            field = self.model._meta.get_field(name)
+            self.configure_field(field)
 
         # Now any custom fields
         for field in dir(self.__class__):
@@ -105,6 +115,43 @@ class DjangoMapping(Mapping):
 
         if getattr(self.Meta, "dynamic", "strict") == "strict":
             self.properties._params["dynamic"] = "strict"
+
+
+    def configure_field(self, field):
+        """This configures an Elasticsearch Mapping field, based on a Django model field"""
+        from .models import Indexable
+
+        # This is for reverse relations, which do not have a db column
+        if field.auto_created and field.is_relation:
+            if isinstance(field, (ForeignObjectRel, ManyToOneRel)) and issubclass(field.to, Indexable):
+                related_properties = field.to.search_objects.mapping.properties.properties.to_dict()
+                self.field(field.name, {"type": "nested", "properties": related_properties})
+                return
+
+        if field.get_internal_type() == "ManyToManyField" and issubclass(field.rel.to, Indexable):
+
+            related_properties = field.rel.to.search_objects.mapping.properties.properties.to_dict()
+            self.field(field.name, {"type": "nested", "properties": related_properties})
+            return
+
+        if isinstance(field, models.ForeignKey):
+            # This is a related field, so it should maybe be nested?
+
+            # We only want to nest fields when they are indexable, and not parent pointers.
+            if issubclass(field.rel.to, Indexable) and not field.rel.parent_link:
+
+                related_properties = field.rel.to.search_objects.mapping.properties.properties.to_dict()
+                self.field(field.name, {"type": "nested", "properties": related_properties})
+                return
+
+        db_column, attname = field.db_column, field.attname
+
+        field_args = FIELD_MAPPINGS.get(field.get_internal_type())
+        if field_args:
+            self.field(db_column or attname, field_args)
+        else:
+            raise Warning("Can't find {}".format(field.get_internal_type()))
+
 
     @property
     def index(self):
