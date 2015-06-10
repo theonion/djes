@@ -18,6 +18,8 @@ class ElasticSearchForeignKey(object):
         return instance.__dict__.get(self.field_name)
 
     def __set__(self, instance, value):
+        if isinstance(value, field.InnerObjectWrapper):
+            value = value.to_dict()
         instance.__dict__[self.field_name] = self.model(**value)
 
 
@@ -45,6 +47,7 @@ class ElasticSearchManyField(object):
         return instance.__dict__.get(self.field_name, ElasticSearchRelatedManager([]))
 
     def __set__(self, instance, value):
+        value = [item.to_dict() for item in value if isinstance(item, field.InnerObjectWrapper)]
         instance.__dict__[self.field_name] = ElasticSearchRelatedManager([self.model(**item_data) for item_data in value])
 
 
