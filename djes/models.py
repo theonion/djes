@@ -55,8 +55,9 @@ class IndexableManager(models.Manager):
             # TODO: What if we've mapped the property to a different name? Will we allow that?
             field = fields[key]
 
-            if isinstance(field, InnerObject):
-                continue
+            # if isinstance(field, InnerObject):
+            #     import pdb; pdb.set_trace()
+            #     continue
 
             if doc["_source"].get(key):
                 attribute_value = doc["_source"][key]
