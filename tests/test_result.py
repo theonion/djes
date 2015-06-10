@@ -9,7 +9,10 @@ import time
 
 from djes.factory import shallow_class_factory
 
-from example.app.models import SimpleObject, RelatableObject, RelationsTestObject, RelatedNestedObject, Tag, DumbTag
+from example.app.models import (
+    SimpleObject, RelatableObject, RelationsTestObject, RelatedNestedObject,
+    Tag, DumbTag, ReverseRelationsParentObject, ReverseRelationsChildObject
+)
 
 
 def test_shallow_factory():
@@ -69,6 +72,27 @@ def test_related_result():
     assert test.id == 123
     assert test.nested is None
     assert isinstance(test, RelatableObject)
+
+
+def test_reverse_relation_result():
+    hit = {
+        "_source": {
+            "id": 123,
+            "name": "test",
+            "children": [{
+                "id": 4,
+                "name": "what"
+            },{
+                "id": 5,
+                "name": "who"
+            }]
+        }
+    }
+    test = ReverseRelationsParentObject.search_objects.from_es(hit)
+    assert test.id == 123
+    assert test.children.count() == 2
+    assert len(test.children.all()) == 2
+    assert isinstance(test.children.all()[0], ReverseRelationsChildObject)
 
 
 @pytest.mark.django_db
@@ -138,3 +162,6 @@ def test_m2m(es_client):
 
     assert dumb_tags[0].id in from_es.dumb_tags.values_list("pk", flat=True)
     assert dumb_tags[1].id in from_es.dumb_tags.values_list("pk", flat=True)
+
+
+

@@ -116,3 +116,22 @@ class SelfRelation(Indexable):
     class Mapping:
         class Meta:
             excludes = ("related",)
+
+
+class ReverseRelationsParentObject(Indexable):
+    name = models.CharField(max_length=255)
+
+    class Mapping:
+
+        class Meta:
+            includes = ("children",)
+
+class ReverseRelationsChildObject(Indexable):
+
+    name = models.CharField(max_length=255)
+    parent = models.ForeignKey(ReverseRelationsParentObject, related_name="children")
+
+    class Mapping:
+
+        class Meta:
+            excludes = ("parent",)
