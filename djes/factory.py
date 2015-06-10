@@ -1,5 +1,6 @@
 from django.db.backends import utils
 from django.db import models
+from django.db.models.fields.related import ManyToOneRel, ForeignObjectRel
 from django.apps import apps
 
 from elasticsearch_dsl import field
@@ -80,6 +81,11 @@ def shallow_class_factory(model):
             if type(es_field) == field.Nested:
                 # This is a nested object!
                 dj_field = model._meta.get_field(attname)
+
+                if isinstance(dj_field, ManyToOneRel):
+                    overrides[attname] = ElasticSearchManyField(attname, dj_field.related_model)
+                elif isinstance(dj_field, ForeignObjectRel):
+                    overrides[attname] = ElasticSearchForeignKey(attname, dj_field.related_model)
 
                 if isinstance(dj_field, models.ManyToManyField):
                     overrides[attname] = ElasticSearchManyField(attname, dj_field.rel.to)

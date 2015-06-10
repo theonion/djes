@@ -73,38 +73,10 @@ class DjangoMapping(Mapping):
                 self.field(db_column or attname, manual_field_mapping)
                 continue
 
-            # if self.model._meta.model_name == "reverserelationsparentobject":
-            #     import pdb; pdb.set_trace()
-            # else:
-            #     print(self.model._meta.model_name)
-
             if field.name in excludes:
                 continue
 
             self.configure_field(field)
-
-            # if field.get_internal_type() == "ManyToManyField" and issubclass(field.rel.to, Indexable):
-
-            #     related_properties = field.rel.to.search_objects.mapping.properties.properties.to_dict()
-            #     self.field(field.name, {"type": "nested", "properties": related_properties})
-            #     continue
-
-            # if isinstance(field, models.ForeignKey):
-            #     # This is a related field, so it should maybe be nested?
-
-            #     # We only want to nest fields when they are indexable, and not parent pointers.
-            #     if issubclass(field.rel.to, Indexable) and not field.rel.parent_link:
-
-            #         related_properties = field.rel.to.search_objects.mapping.properties.properties.to_dict()
-            #         self.field(field.name, {"type": "nested", "properties": related_properties})
-            #         continue
-
-            # field_args = FIELD_MAPPINGS.get(field.get_internal_type())
-            # if field_args:
-            #     self.field(db_column or attname, field_args)
-            # else:
-            #     raise Warning("Can't find {}".format(field.get_internal_type()))
-
 
         # Now any included relations
         for name in includes:
