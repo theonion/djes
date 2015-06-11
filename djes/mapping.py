@@ -6,20 +6,37 @@ from elasticsearch_dsl.field import Field
 
 from djes.conf import settings
 
-# TODO: expand this for all django field types
 FIELD_MAPPINGS = {
     "AutoField": {"type": "long"},
-    "OneToOneField": {"type": "long"},
+    "BigIntegerField": {"type": "long"},
+    "BinaryField": {"type": "binary"},
+    "BooleanField": {"type": "boolean"},
+    "CharField": {"type": "string"},
+    "CommaSeparatedIntegerField": {"type": "string"},
+    "DateField": {"type": "date"},
+    "DateTimeField": {"type": "date"},
+    "DecimalField": {"type": "string"},
+    "DurationField": {"type": "long"},
+    "EmailField": {"type": "string"},
+    # "FileField": {"type": ""},  # TODO: make a decision on this
+    "FilePathField": {"type": "string"},
+    "FloatField": {"type": "double"},
+    # "ImageField": {"type": ""},  # TODO: make a decision on this
+    "IntegerField": {"type": "long"},
+    "IPAddressField": {"type": "string", "index": "not_analyzed"},
+    "GenericIPAddressField": {"type": "string", "index": "not_analyzed"},
+    "NullBooleanField": {"type": "boolean"},
+    "PositiveIntegerField": {"type": "long"},
+    "PositiveSmallIntegerField": {"type": "long"},
+    "SlugField": {"type": "string", "index": "not_analyzed"},
+    "SmallIntegerField": {"type": "long"},
+    "TextField": {"type": "string"},
+    "TimeField": {"type": "string"},
+    "URLField": {"type": "string"},
+    "UUIDField": {"type": "string", "index": "not_analyzed"},
     "ForeignKey": {"type": "long"},
     "ManyToManyField": {"type": "long"},
-    "IntegerField": {"type": "long"},
-    "CharField": {"type": "string"},
-    "TextField": {"type": "string"},
-    "SlugField": {"type": "string", "index": "not_analyzed"},
-    "DateTimeField": {"type": "date"},
-    "DateField": {"type": "date"},
-    "BooleanField": {"type": "boolean"},
-    "PositiveIntegerField": {"type": "long"},
+    "OneToOneField": {"type": "long"},
 }
 
 
