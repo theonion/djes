@@ -21,7 +21,7 @@ FIELD_MAPPINGS = {
     "FilePathField": {"type": "string"},
     "FloatField": {"type": "double"},
     # "ImageField": {"type": ""},  # TODO: make a decision on this
-    "IntegerField": {"type": "number"},
+    "IntegerField": {"type": "long"},
     "IPAddressField": {"type": "string", "index": "not_analyzed"},
     "GenericIPAddressField": {"type": "string", "index": "not_analyzed"},
     "NullBooleanField": {"type": "boolean"},
