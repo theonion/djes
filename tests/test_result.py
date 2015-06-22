@@ -122,6 +122,23 @@ def test_simple_get(es_client):
 
 
 @pytest.mark.django_db
+def test_simple_delete(es_client):
+
+    management.call_command("sync_es")
+
+    test_object = mommy.make(SimpleObject)
+    test_object.index()
+    time.sleep(1)
+
+    from_es = SimpleObject.search_objects.get(pk=test_object.id)
+    assert from_es.foo == test_object.foo
+
+    test_object.delete_index()
+    with pytest.raises(SimpleObject.DoesNotExist):
+        SimpleObject.search_objects.get(pk=test_object.pk)
+
+
+@pytest.mark.django_db
 def test_related_get(es_client):
 
     management.call_command("sync_es")
