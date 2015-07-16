@@ -203,3 +203,14 @@ class Indexable(models.Model):
                     if base_base:
                         return base_base
         return None
+
+    @classmethod
+    def get_doc_types(cls, exclude_base=False):
+        """Returns the doc_type of this class and all of its descendants."""
+        names = []
+        if not exclude_base:
+            names.append(cls.search_objects.mapping.doc_type)
+        for subclass in cls.__subclasses__():
+            names += subclass.get_doc_types()
+            # names.append(subclass.search_objects.mapping.doc_type)
+        return names    

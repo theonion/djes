@@ -128,3 +128,11 @@ def test_reverse_relations():
             }
         }
     }
+
+def test_get_doc_types():
+    assert SimpleObject.get_doc_types() == [
+        'app_simpleobject',
+        'super_manual_mapping',
+        'app_childobject',
+        'app_grandchildobject'
+    ]
