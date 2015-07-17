@@ -159,10 +159,10 @@ class Indexable(models.Model):
 
             elif callable(attribute):
                 out[key] = attribute()
-            elif isinstance(attribute, Indexable):
-                out[key] = attribute.to_dict()
             elif hasattr(field, "to_es"):
                 out[key] = field.to_es(attribute)
+            elif isinstance(attribute, Indexable):
+                out[key] = attribute.to_dict()
             else:
                 out[key] = attribute
 
@@ -208,9 +208,9 @@ class Indexable(models.Model):
     def get_doc_types(cls, exclude_base=False):
         """Returns the doc_type of this class and all of its descendants."""
         names = []
-        if not exclude_base:
+        if not exclude_base and hasattr(cls, 'search_objects'):
             names.append(cls.search_objects.mapping.doc_type)
         for subclass in cls.__subclasses__():
             names += subclass.get_doc_types()
             # names.append(subclass.search_objects.mapping.doc_type)
-        return names    
+        return names  

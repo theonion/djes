@@ -58,6 +58,37 @@ def test_relatable(es_client):
         }
     }
 
+@pytest.mark.django_db
+def test_poly_reference(es_client):
+    child_a = PolyChildA.objects.create(slug='slug', number=1)
+    child_b = PolyChildB.objects.create(album='st.anger', band_name='metallica')
+    parent_a = PolyParent.objects.get(id=child_a.id)
+    parent_b = PolyParent.objects.get(id=child_b.id)
+
+    poly_relationship_a = PolyRelationship.objects.create(poly_parent=parent_a)
+    assert poly_relationship_a.to_dict() == {
+        'poly_parent': {
+            'text': '', 
+            'slug': 'slug', 
+            'number': 1, 
+            'polyparent_ptr_id': 1, 
+            'id': 1
+        }, 
+        'id': 1
+    }
+
+    poly_relationship_b = PolyRelationship.objects.create(poly_parent=parent_b)
+    assert poly_relationship_b.to_dict() == {
+        'poly_parent': {
+            'album': 'st.anger',
+            'text': '',
+            'band_name': 'metallica', 
+            'id': 2, 
+            'polyparent_ptr_id': 2
+        }, 
+        'id': 2
+    }
+
 
 @pytest.mark.django_db
 def test_many_to_many(es_client):

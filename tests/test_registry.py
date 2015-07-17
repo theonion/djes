@@ -5,7 +5,7 @@ from example.app.models import SimpleObject, ManualMappingObject, ChildObject, G
 
 def test_simple():
     assert indexable_registry.all_models.get("app_simpleobject") == SimpleObject
-    assert len(indexable_registry.all_models) == 12
+    assert len(indexable_registry.all_models) == 16
 
 
 def test_base():

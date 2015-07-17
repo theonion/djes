@@ -86,6 +86,7 @@ class DjangoMapping(Mapping):
             db_column, attname = field.db_column, field.attname
 
             manual_field_mapping = getattr(self, field.name, None)
+            # TODO: I am 90% shirt this is not being utilized. Test later.
             if manual_field_mapping:
                 self.field(field.name, manual_field_mapping)
                 continue
