@@ -30,6 +30,21 @@ class ColorField(field.Object):
         return "#{red}{green}{blue}".format(**data)
 
 
+class PolyParentField(field.Object):
+
+    def to_es(self, data):
+        return self.get_poly_object(data).to_dict()
+
+    def get_poly_object(self, data):
+        cls = data.get_base_class()
+        for subclass in cls.__subclasses__():
+            model_name = subclass._meta.model_name
+            child = getattr(data, model_name, None)
+            if child:
+                return child
+        return data
+
+
 class SimpleObject(Indexable):
 
     foo = models.IntegerField()
@@ -54,6 +69,52 @@ class ManualMappingObject(SimpleObject):
 
         bar = field.String(fields={"raw": field.String(index="not_analyzed")})
         status = field.String(index="not_analyzed")
+
+
+class PolyParent(Indexable):
+
+    text = models.CharField(max_length=255)
+
+    @classmethod
+    def get_merged_mapping_properties(cls):
+        properties = {}
+        def gather_properties(klass):
+            properties.update(klass.search_objects.mapping.to_dict())
+            for subclass in klass.__subclasses__():
+                gather_properties(subclass)
+        gather_properties(cls)
+        return properties
+
+
+class PolyChildA(PolyParent):
+
+    slug = models.CharField(max_length=255)
+    number = models.IntegerField()
+
+    @property
+    def slug_number(self):
+        return "%s-%s"
+
+
+class PolyChildB(PolyParent):
+
+    album = models.CharField(max_length=255)
+    band_name = models.CharField(max_length=255)
+
+    @property
+    def full_title(self):
+        return self.full_title
+
+
+class PolyRelationship(Indexable):
+
+    poly_parent = models.ForeignKey(PolyParent)
+
+    class Mapping:
+        poly_parent = PolyParentField()
+
+        class Meta:
+            dynamic = False
 
 
 class ChildObject(SimpleObject):
