@@ -15,6 +15,8 @@ def model_iterator(model, index=None, out=None):
     if out:
         out.write("Indexing {} {} objects".format(total, model.__name__))
     for obj in model.search_objects.iterator():
+        if obj.__class__ != model:
+            continue
         counter += 1
         if counter % 100 == 0:
             if out:
