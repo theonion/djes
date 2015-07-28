@@ -15,6 +15,9 @@ def model_iterator(model, index=None, out=None):
     if out:
         out.write("Indexing {} {} objects".format(total, model.__name__))
     for obj in model.search_objects.iterator():
+        if obj.__class__ != model:
+            # TODO: Come up with a better method to avoid redundant indexing
+            continue
         counter += 1
         if counter % 100 == 0:
             if out:
