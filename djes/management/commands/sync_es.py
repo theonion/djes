@@ -32,6 +32,22 @@ def get_indexes():
     return indexes
 
 
+def get_latest_index_version(name):
+    conn = connections.get_connection('default')
+    alias = conn.indices.get_alias(name)
+
+    try:
+        alias_version = list(alias.keys())[0]
+        version = alias_version.rpartition('_')[-1]
+    except IndexError:
+        version = 1
+
+    try:
+        return int(version)
+    except ValueError:
+        raise Exception("Invalid version value for %s" % alias_version)
+
+
 def build_versioned_index(name, version=1, body=None, old_version=None, should_index=False, out=None):
     es = connections.get_connection("default")
     versioned_index_name = "{0}_{1:0>4}".format(name, version)
@@ -70,10 +86,11 @@ def stringify(data):
 
 def sync_index(name, body, should_index=False, out=None):
     es = connections.get_connection("default")
+    version = get_latest_index_version(name)
 
     if not es.indices.exists_alias(name=name):
         # We probably haven't synced before, that means we need to create an index, and then alias
-        build_versioned_index(name, body=body, should_index=should_index, out=out)
+        build_versioned_index(name, version=version, body=body, should_index=should_index, out=out)
         return
 
     # The alias exists, so there's already a version of this index out there
@@ -133,7 +150,7 @@ def sync_index(name, body, should_index=False, out=None):
     for doc_type, mapping_body in body["mappings"].items():
         if mapping_body != server_mappings.get(doc_type, {}):
             try:
-                
+
                 if out:
                     out.write("Updating mapping for \"{}\"".format(doc_type))
 
@@ -149,6 +166,7 @@ def sync_index(name, body, should_index=False, out=None):
 
                     build_versioned_index(
                         name,
+                        should_index=should_index,
                         version=new_version,
                         body=body,
                         old_version=old_version

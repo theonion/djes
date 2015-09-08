@@ -15,7 +15,7 @@ def test_sync_index(es_client):
         "settings": {
             "index": {
                 "number_of_replicas": "1",
-                
+
                 "analysis": {
                     "analyzer": {
                         "autocomplete": {
@@ -99,6 +99,18 @@ def test_sync_index(es_client):
     new_mapping = es_client.indices.get_mapping(index="djes-testing-index", doc_type="testing-two")
     new_mapping = new_mapping["djes-testing-index_0002"]
     assert new_mapping["mappings"]["testing-two"] == settings_body["mappings"]["testing-two"]
+
+    # Add another mapping
+    settings_body["mappings"]["testing-two"] = {
+        "properties": {
+            "foo": {"type": "long"},
+            "baz": {"type": "integer"}
+        }
+    }
+    sync_index("djes-testing-index", body=settings_body)
+    assert es_client.indices.exists("djes-testing-index_0001")
+    assert es_client.indices.exists("djes-testing-index_0002")
+    assert es_client.indices.exists("djes-testing-index_0003")
 
     es_client.indices.delete_alias("djes-testing-index_*", "_all", ignore=[404])
     es_client.indices.delete("djes-testing-index_*", ignore=[404])
