@@ -37,7 +37,7 @@ def get_latest_index_version(name):
     alias = conn.indices.get_alias(name)
 
     try:
-        alias_version = alias.keys()[0]
+        alias_version = list(alias.keys())[0]
         version = alias_version.rpartition('_')[-1]
     except IndexError:
         version = 1
