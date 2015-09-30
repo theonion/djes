@@ -4,6 +4,7 @@ from elasticsearch.helpers import streaming_bulk
 
 from djes.apps import indexable_registry
 from djes.conf import settings
+from djes.util import batched_queryset
 
 
 def model_iterator(model, index=None, out=None):
@@ -14,7 +15,7 @@ def model_iterator(model, index=None, out=None):
     total = model.search_objects.count()
     if out:
         out.write("Indexing {} {} objects".format(total, model.__name__))
-    for obj in model.search_objects.iterator():
+    for obj in batched_queryset(model.objects.all()):
         if obj.__class__ != model:
             # TODO: Come up with a better method to avoid redundant indexing
             continue
