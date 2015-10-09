@@ -37,9 +37,9 @@ def get_latest_index_version(name):
     try:
         alias = conn.indices.get_alias(name)
         if not alias:
-            version = 1
+            return 1
     except TransportError:
-        version = 1
+        return 1
 
     try:
         alias_version = list(alias.keys())[0]
