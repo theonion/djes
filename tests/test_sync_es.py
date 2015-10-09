@@ -6,6 +6,46 @@ def test_index_settings():
     assert indexes["djes-example"]["settings"]["index"]["number_of_replicas"] == 1
 
 
+def test_sync_index_exists_without_version(es_client):
+    alias_name = 'djes-integration'
+    es_client.indices.delete_alias(alias_name + '*', '_all', ignore=[404])
+    es_client.indices.delete(alias_name + '*', ignore=[404])
+
+    settings_body = {
+        "settings": {
+            "index": {
+                "number_of_replicas": "1",
+
+                "analysis": {
+                    "analyzer": {
+                        "autocomplete": {
+                            "type": "custom",
+                            "tokenizer": "standard",
+                            "char_filter": ["html_strip"],
+                            "filter": ["lowercase", "stop", "snowball"]
+                        }
+                    }
+                }
+            },
+        },
+        "mappings": {
+            "testing": {
+                "properties": {
+                    "foo": {"type": "string"}
+                }
+            }
+        }
+    }
+    alias = es_client.indices.get_alias(alias_name)
+    assert not alias
+
+    sync_index(alias_name, body=settings_body)
+    assert es_client.indices.exists('{}_0001'.format(alias_name))
+
+    sync_index(alias_name, body=settings_body)
+    assert es_client.indices.exists('{}_0001'.format(alias_name))
+
+
 def test_sync_index(es_client):
     # Some setup code
     es_client.indices.delete_alias("djes-testing-index_*", "_all", ignore=[404])
@@ -21,7 +61,7 @@ def test_sync_index(es_client):
                         "autocomplete": {
                             "type": "custom",
                             "tokenizer": "standard",
-                            "char_filter":  ["html_strip"],
+                            "char_filter": ["html_strip"],
                             "filter": ["lowercase", "stop", "snowball"]
                         }
                     }

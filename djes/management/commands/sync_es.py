@@ -34,11 +34,18 @@ def get_indexes():
 
 def get_latest_index_version(name):
     conn = connections.get_connection('default')
-    alias = conn.indices.get_alias(name)
+    try:
+        alias = conn.indices.get_alias(name)
+        if not alias:
+            version = 1
+    except TransportError:
+        version = 1
 
     try:
         alias_version = list(alias.keys())[0]
-        version = alias_version.rpartition('_')[-1]
+        version = alias_version.split('_')[-1]
+        if not version.isdigit():
+            version = 1
     except IndexError:
         version = 1
 
@@ -57,8 +64,7 @@ def build_versioned_index(name, version=1, body=None, old_version=None, should_i
         out.write("Creating versioned index \"{}\"".format(versioned_index_name))
 
     if should_index:
-        bulk_index(es, index=name, version=version, out=out)  # Bulk index here...
-
+        bulk_index(es, index=versioned_index_name, version=version, out=out)  # Bulk index here...
 
     if out:
         out.write("Pointing alias \"{}\" at versioned index \"{}\"".format(name, versioned_index_name))
