@@ -32,27 +32,18 @@ def get_indexes():
     return indexes
 
 
-def get_latest_index_version(name):
+def get_latest_index_version(name, version=1):
     conn = connections.get_connection('default')
     try:
         alias = conn.indices.get_alias(name)
-        if not alias:
-            return 1
     except TransportError:
-        return 1
-
-    try:
-        alias_version = list(alias.keys())[0]
-        version = alias_version.split('_')[-1]
-        if not version.isdigit():
-            version = 1
-    except IndexError:
-        version = 1
-
-    try:
-        return int(version)
-    except ValueError:
-        raise Exception("Invalid version value for %s" % alias_version)
+        alias = None
+    if alias and isinstance(alias, dict):
+        current_index = list(alias.keys())[0]
+        index_version = current_index.split('_')[-1]
+        if index_version.isdigit():
+            version = int(index_version)
+    return version
 
 
 def build_versioned_index(name, version=1, body=None, old_version=None, should_index=False, out=None):
