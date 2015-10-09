@@ -34,8 +34,11 @@ def get_indexes():
 
 def get_latest_index_version(name):
     conn = connections.get_connection('default')
-    alias = conn.indices.get_alias(name)
-    if not alias:
+    try:
+        alias = conn.indices.get_alias(name)
+        if not alias:
+            version = 1
+    except TransportError:
         version = 1
 
     try:
