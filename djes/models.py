@@ -1,7 +1,6 @@
 from django.db import models
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.connections import connections
-from elasticsearch_dsl.field import InnerObject
 
 from .apps import indexable_registry
 from .factory import shallow_class_factory
@@ -213,4 +212,4 @@ class Indexable(models.Model):
         for subclass in cls.__subclasses__():
             names += subclass.get_doc_types()
             # names.append(subclass.search_objects.mapping.doc_type)
-        return names  
+        return names

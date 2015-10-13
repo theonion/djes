@@ -32,18 +32,20 @@ def model_iterator(model, index=None, out=None):
 
 
 def bulk_index(es, index=None, version=1, out=None):
-    if index not in indexable_registry.indexes:
+    index_base = index.rpartition('_')[0]
+    # TODO: we need to reassess how we reference aliases and indices.
+    if index_base not in indexable_registry.indexes:
         # Looks like someone is requesting the indexing of something we don't have models for
         return
 
-    vindex = "{0}_{1:0>4}".format(index, version)
+    vindex = "{0}_{1:0>4}".format(index_base, version)
 
     es.indices.put_settings(
         index=vindex,
         body={"index": {"refresh_interval": "-1"}}
     )
 
-    for model in indexable_registry.indexes[index]:
+    for model in indexable_registry.indexes[index_base]:
 
         identifier = "{}.{}".format(model._meta.app_label, model._meta.object_name)
         if identifier in settings.DJES_EXCLUDED_MODELS:
