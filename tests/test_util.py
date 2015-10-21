@@ -1,7 +1,9 @@
 from django.db import connection, reset_queries
 from django.conf import settings
+
 import pytest
 from model_mommy import mommy
+from elasticsearch_dsl.connections import connections
 
 from djes.util import batched_queryset
 from example.app.models import SimpleObject
@@ -65,3 +67,32 @@ def test_create_during_query(es_client):
     # fetched is based on initial size, but last chunk fetched will grab enough new objects to fill
     # chunk (size 3).
     assert results == (objects + new_objects[:2])
+
+
+@pytest.mark.django_db
+def test_delete_object_es(es_client):
+    es = connections.get_connection('default')
+    obj = mommy.make(SimpleObject)
+
+    SimpleObject.search_objects.refresh()
+
+    index = SimpleObject.search_objects.mapping.index
+    doc_type = SimpleObject.search_objects.mapping.doc_type
+    obj_id_query = {
+        "query": {
+            "ids": {
+                "values": [obj.id]
+            }
+        }
+    }
+    results = es.search(index=index, doc_type=doc_type, body=obj_id_query)
+    hits = results['hits']['hits']
+    assert len(hits) == 1
+
+    obj.delete()
+
+    SimpleObject.search_objects.refresh()
+
+    results = es.search(index=index, doc_type=doc_type, body=obj_id_query)
+    hits = results['hits']['hits']
+    assert len(hits) == 0
