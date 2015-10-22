@@ -96,3 +96,36 @@ def test_delete_object_es(es_client):
     results = es.search(index=index, doc_type=doc_type, body=obj_id_query)
     hits = results['hits']['hits']
     assert len(hits) == 0
+
+
+@pytest.mark.django_db
+def test_delete_non_indexed_object(es_client):
+    es = connections.get_connection('default')
+    obj = mommy.make(SimpleObject)
+
+    SimpleObject.search_objects.refresh()
+
+    index = SimpleObject.search_objects.mapping.index
+    doc_type = SimpleObject.search_objects.mapping.doc_type
+    obj_id_query = {
+        "query": {
+            "ids": {
+                "values": [obj.id]
+            }
+        }
+    }
+    results = es.search(index=index, doc_type=doc_type, body=obj_id_query)
+    hits = results['hits']['hits']
+    assert len(hits) == 1
+
+    # remove it from the index
+    obj.delete_index()
+
+    SimpleObject.search_objects.refresh()
+
+    results = es.search(index=index, doc_type=doc_type, body=obj_id_query)
+    hits = results['hits']['hits']
+    assert len(hits) == 0
+
+    # call delete and verify errors aren't thrown
+    obj.delete()
