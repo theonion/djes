@@ -6,7 +6,7 @@ from model_mommy import mommy
 from elasticsearch_dsl.connections import connections
 
 from djes.util import batched_queryset
-from example.app.models import SimpleObject, ColorField
+from example.app.models import SimpleObject
 
 
 @pytest.mark.django_db
