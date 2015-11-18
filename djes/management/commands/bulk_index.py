@@ -4,7 +4,7 @@ from elasticsearch.helpers import streaming_bulk
 
 from djes.apps import indexable_registry
 from djes.conf import settings
-from djes.util import batched_queryset
+from djes.utils import batched_queryset
 
 
 def model_iterator(model, index=None, out=None):
