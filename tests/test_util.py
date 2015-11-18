@@ -5,7 +5,7 @@ import pytest
 from model_mommy import mommy
 from elasticsearch_dsl.connections import connections
 
-from djes.utils import batched_queryset
+from djes.utils.query import batched_queryset
 from example.app.models import SimpleObject
 
 
