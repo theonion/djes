@@ -78,6 +78,7 @@ class PolyParent(Indexable):
     @classmethod
     def get_merged_mapping_properties(cls):
         properties = {}
+
         def gather_properties(klass):
             properties.update(klass.search_objects.mapping.to_dict())
             for subclass in klass.__subclasses__():
@@ -104,6 +105,15 @@ class PolyChildB(PolyParent):
     @property
     def full_title(self):
         return self.full_title
+
+
+class PolyOrphan(PolyParent):
+
+    garbage = models.CharField(max_length=256)
+
+    class Mapping:
+        class Meta:
+            orphaned = True
 
 
 class PolyRelationship(Indexable):
@@ -186,6 +196,7 @@ class ReverseRelationsParentObject(Indexable):
 
         class Meta:
             includes = ("children",)
+
 
 class ReverseRelationsChildObject(Indexable):
 

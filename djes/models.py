@@ -192,7 +192,13 @@ class Indexable(models.Model):
         return self.__class__.search_objects.mapping
 
     @classmethod
+    def is_orphaned(cls):
+        return getattr(cls.search_objects.mapping.Meta, 'orphaned', False)
+
+    @classmethod
     def get_base_class(cls):
+        if cls.is_orphaned():
+            return cls
         if cls.__bases__:
             for base in cls.__bases__:
                 if base == Indexable:
