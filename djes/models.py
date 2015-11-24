@@ -204,7 +204,10 @@ class Indexable(models.Model):
 
     @classmethod
     def is_orphaned(cls):
-        return getattr(cls.search_objects.mapping.Meta, 'orphaned', False)
+        try:
+            return getattr(cls.search_objects.mapping.Meta, 'orphaned', False)
+        except:
+            return False
 
     @classmethod
     def get_base_class(cls):
