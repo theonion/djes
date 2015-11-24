@@ -44,18 +44,19 @@ class IndexableManager(models.Manager):
 
         # We can pass in the entire source, except when we have a non-indexable many-to-many
         for field in self.model._meta.get_fields():
-            try:
-                if not field.auto_created and field.many_to_many:
-                    if not issubclass(field.rel.to, Indexable):
-                        import pdb; pdb.set_trace()
-                        if field.name in doc["_source"]:
-                            del doc["_source"][field.name]
-            except:
-                import pdb; pdb.set_trace()
+
+            if not field.auto_created and field.many_to_many:
+                if not issubclass(field.rel.to, Indexable):
+                    if field.name in doc["_source"]:
+                        del doc["_source"][field.name]
+
+            if field.one_to_many:
+                if field.name in doc["_source"]:
+                    del doc["_source"][field.name]
+
 
         # Now let's go ahead and parse all the fields
         fields = self.mapping.properties.properties
-        import pdb; pdb.set_trace()
         for key in fields:
             # TODO: What if we've mapped the property to a different name? Will we allow that?
             field = fields[key]
