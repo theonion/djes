@@ -44,12 +44,18 @@ class IndexableManager(models.Manager):
 
         # We can pass in the entire source, except when we have a non-indexable many-to-many
         for field in self.model._meta.get_fields():
-            if not field.auto_created and field.many_to_many and not issubclass(field.rel.to, Indexable):
-                if field.name in doc["_source"]:
-                    del doc["_source"][field.name]
+            try:
+                if not field.auto_created and field.many_to_many:
+                    if not issubclass(field.rel.to, Indexable):
+                        import pdb; pdb.set_trace()
+                        if field.name in doc["_source"]:
+                            del doc["_source"][field.name]
+            except:
+                import pdb; pdb.set_trace()
 
         # Now let's go ahead and parse all the fields
         fields = self.mapping.properties.properties
+        import pdb; pdb.set_trace()
         for key in fields:
             # TODO: What if we've mapped the property to a different name? Will we allow that?
             field = fields[key]
@@ -149,17 +155,21 @@ class Indexable(models.Model):
 
             field = fields[key]
 
+            # I believe this should take the highest priority.
+            if hasattr(field, "to_es"):
+                out[key] = field.to_es(attribute)
+
             # First we check it this is a manager, in which case we have many related objects
-            if isinstance(attribute, models.Manager):
+            elif isinstance(attribute, models.Manager):
                 if issubclass(attribute.model, Indexable):
+                    # TODO: We want this to have some awareness of the relevant field.
                     out[key] = [obj.to_dict() for obj in attribute.all()]
                 else:
                     out[key] = list(attribute.values_list("pk", flat=True))
 
             elif callable(attribute):
                 out[key] = attribute()
-            elif hasattr(field, "to_es"):
-                out[key] = field.to_es(attribute)
+
             elif isinstance(attribute, Indexable):
                 out[key] = attribute.to_dict()
             else:
