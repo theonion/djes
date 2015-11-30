@@ -203,7 +203,16 @@ class Indexable(models.Model):
 
     @classmethod
     def is_orphaned(cls):
-        return getattr(cls.search_objects.mapping.Meta, 'orphaned', False)
+        manager = getattr(cls, 'search_objects', None)
+        if not manager:
+            return False
+        mapping = getattr(manager, 'mapping', None)
+        if not mapping:
+            return False
+        meta = getattr(mapping, 'Meta', None)
+        if not meta:
+            return False
+        return getattr(meta, 'orphaned', False)
 
     @classmethod
     def get_base_class(cls):
