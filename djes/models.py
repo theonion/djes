@@ -44,9 +44,15 @@ class IndexableManager(models.Manager):
 
         # We can pass in the entire source, except when we have a non-indexable many-to-many
         for field in self.model._meta.get_fields():
-            if not field.auto_created and field.many_to_many and not issubclass(field.rel.to, Indexable):
-                if field.name in doc["_source"]:
-                    del doc["_source"][field.name]
+
+            if not field.auto_created and field.many_to_many:
+                if not issubclass(field.rel.to, Indexable):
+                    if field.name in doc["_source"]:
+                        del doc["_source"][field.name]
+
+            # if field.one_to_many:
+            #     if field.name in doc["_source"]:
+            #         del doc["_source"][field.name]
 
         # Now let's go ahead and parse all the fields
         fields = self.mapping.properties.properties
@@ -149,17 +155,21 @@ class Indexable(models.Model):
 
             field = fields[key]
 
+            # I believe this should take the highest priority.
+            if hasattr(field, "to_es"):
+                out[key] = field.to_es(attribute)
+
             # First we check it this is a manager, in which case we have many related objects
-            if isinstance(attribute, models.Manager):
+            elif isinstance(attribute, models.Manager):
                 if issubclass(attribute.model, Indexable):
+                    # TODO: We want this to have some awareness of the relevant field.
                     out[key] = [obj.to_dict() for obj in attribute.all()]
                 else:
                     out[key] = list(attribute.values_list("pk", flat=True))
 
             elif callable(attribute):
                 out[key] = attribute()
-            elif hasattr(field, "to_es"):
-                out[key] = field.to_es(attribute)
+
             elif isinstance(attribute, Indexable):
                 out[key] = attribute.to_dict()
             else:
@@ -192,7 +202,13 @@ class Indexable(models.Model):
         return self.__class__.search_objects.mapping
 
     @classmethod
+    def is_orphaned(cls):
+        return getattr(cls.search_objects.mapping.Meta, 'orphaned', False)
+
+    @classmethod
     def get_base_class(cls):
+        if cls.is_orphaned():
+            return cls
         if cls.__bases__:
             for base in cls.__bases__:
                 if base == Indexable:
