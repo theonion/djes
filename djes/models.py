@@ -190,12 +190,12 @@ class Indexable(models.Model):
                  body=self.to_dict(),
                  refresh=refresh)
 
-    def delete_index(self, refresh=False):
+    def delete_index(self, refresh=False, ignore=None):
         """Removes the object from the index if `indexed=False`"""
         es = connections.get_connection("default")
         index = self.__class__.search_objects.mapping.index
         doc_type = self.__class__.search_objects.mapping.doc_type
-        es.delete(index, doc_type, id=self.pk, refresh=refresh)
+        es.delete(index, doc_type, id=self.pk, refresh=refresh, ignore=ignore)
 
     @property
     def mapping(self):

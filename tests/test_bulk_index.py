@@ -24,6 +24,8 @@ def test_bulk_index(es_client):
     management.call_command("bulk_index")
     time.sleep(1)  # Let the index refresh
 
+    SimpleObject.search_objects.refresh()
+
     response = es_client.search(
         index=SimpleObject.search_objects.mapping.index,
         doc_type=SimpleObject.search_objects.mapping.doc_type
