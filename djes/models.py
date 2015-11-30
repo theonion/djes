@@ -50,10 +50,9 @@ class IndexableManager(models.Manager):
                     if field.name in doc["_source"]:
                         del doc["_source"][field.name]
 
-            if field.one_to_many:
-                if field.name in doc["_source"]:
-                    del doc["_source"][field.name]
-
+            # if field.one_to_many:
+            #     if field.name in doc["_source"]:
+            #         del doc["_source"][field.name]
 
         # Now let's go ahead and parse all the fields
         fields = self.mapping.properties.properties
@@ -204,10 +203,7 @@ class Indexable(models.Model):
 
     @classmethod
     def is_orphaned(cls):
-        try:
-            return getattr(cls.search_objects.mapping.Meta, 'orphaned', False)
-        except:
-            return False
+        return getattr(cls.search_objects.mapping.Meta, 'orphaned', False)
 
     @classmethod
     def get_base_class(cls):
