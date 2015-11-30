@@ -235,7 +235,6 @@ class Indexable(models.Model):
         if not exclude_base and hasattr(cls, 'search_objects'):
             names.append(cls.search_objects.mapping.doc_type)
         for subclass in cls.__subclasses__():
-            if not subclass.is_orphaned():
-                names += subclass.get_doc_types()
+            names += subclass.get_doc_types()
             # names.append(subclass.search_objects.mapping.doc_type)
         return names
