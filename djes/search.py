@@ -100,3 +100,44 @@ class LazySearch(Search):
                                                 **self._params))
 
         return self._executed
+
+
+class SearchParty(object):
+    """
+    Generator™ for multiple searches that allows for searches to iterate through the results of
+    multiple queries, while providing explicit logic for indexing.
+    """
+    def __init__(self, *args, **kwargs):
+        self.searches = {}
+        self.primary_search = None
+
+    def register_search(self, search, search_range=None, primary=False):
+        if primary:
+            self.primary_search = search
+        else:
+            if type(search_range) is list:
+                for srange in search_range:
+                    self.validate_range(srange)
+            else:
+                self.validate_range(search_range)
+                search_range = [search_range]
+            self.searches[search] = {"ranges": search_range}
+
+    def validate_range(self, search_range):
+        if search_range is None:
+            raise ValueError("Received a None value for search range.")
+        if type(search_range) is not tuple:
+            raise TypeError(
+                "{}. Search ranges must be formatted as a tuple. e.g., (x, y).".format(
+                    search_range
+                )
+            )
+        if len(search_range) != 2:
+            raise IndexError(
+                "{}. Search ranges must be 2 values. e.g., (x, y).".format(search_range)
+            )
+        if search_range[0] > search_range[1]:
+            raise ValueError(
+                ("{}. The first value of a search range must be less than the")
+                ("following value.").format(search_range)
+            )
