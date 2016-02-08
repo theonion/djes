@@ -113,8 +113,11 @@ class SearchParty(object):
         self.primary_search = None
 
     def __getitem__(self, n):
-        if n + 1 == len(self.results):
+        if n + 1 <= len(self.results):
             return self.results[n]
+        elif n - len(self.results) > 1:
+            for i in range(len(self.results), n):
+                self[i]
         search = self.get_search(n)
         self.results.append(self.get_result(search))
         return self.results[n]

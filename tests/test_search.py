@@ -99,7 +99,81 @@ def test_search_party(es_client):
     assert awake_es.count() == 5
 
     search_party = SearchParty()
-    search_party.register_search(tired_es, primary=True)
+    search_party.register_search(tired_es)
     search_party.register_search(awake_es, search_range=(0, 1))
+    assert search_party[0].baz == "awake"
+    assert search_party[1].baz == "tired"
+    assert search_party[2].baz == "tired"
 
-    import pdb; pdb.set_trace()
+    search_party = SearchParty()
+    search_party.register_search(tired_es)
+    search_party.register_search(awake_es, search_range=(1, 3))
+    assert search_party[0].baz == "tired"
+    assert search_party[1].baz == "awake"
+    assert search_party[2].baz == "awake"
+
+    search_party = SearchParty()
+    search_party.register_search(tired_es)
+    search_party.register_search(
+        awake_es,
+        search_range=[
+            (1, 2),
+            (3, 4),
+            (5, 6),
+            (7, 8),
+            (9, 10)
+        ]
+    )
+    assert search_party[0].baz == "tired"
+    assert search_party[0].id == tired_es[0].id
+    assert search_party[1].baz == "awake"
+    assert search_party[1].id == awake_es[0].id
+    assert search_party[2].baz == "tired"
+    assert search_party[2].id == tired_es[1].id
+    assert search_party[3].baz == "awake"
+    assert search_party[3].id == awake_es[1].id
+    assert search_party[4].baz == "tired"
+    assert search_party[4].id == tired_es[2].id
+    assert search_party[5].baz == "awake"
+    assert search_party[5].id == awake_es[2].id
+    assert search_party[6].baz == "tired"
+    assert search_party[6].id == tired_es[3].id
+    assert search_party[7].baz == "awake"
+    assert search_party[7].id == awake_es[3].id
+    assert search_party[8].baz == "tired"
+    assert search_party[8].id == tired_es[4].id
+    assert search_party[9].baz == "awake"
+    assert search_party[9].id == awake_es[4].id
+
+    search_party = SearchParty()
+    search_party.register_search(tired_es)
+    search_party.register_search(
+        awake_es,
+        search_range=[
+            (1, 2),
+            (3, 4),
+            (5, 6),
+            (7, 8),
+            (9, 10)
+        ]
+    )
+    assert search_party[9].baz == "awake"
+    assert search_party[9].id == awake_es[4].id
+    assert search_party[8].baz == "tired"
+    assert search_party[8].id == tired_es[4].id
+    assert search_party[7].baz == "awake"
+    assert search_party[7].id == awake_es[3].id
+    assert search_party[6].baz == "tired"
+    assert search_party[6].id == tired_es[3].id
+    assert search_party[5].baz == "awake"
+    assert search_party[5].id == awake_es[2].id
+    assert search_party[4].baz == "tired"
+    assert search_party[4].id == tired_es[2].id
+    assert search_party[3].baz == "awake"
+    assert search_party[3].id == awake_es[1].id
+    assert search_party[2].baz == "tired"
+    assert search_party[2].id == tired_es[1].id
+    assert search_party[1].baz == "awake"
+    assert search_party[1].id == awake_es[0].id
+    assert search_party[0].baz == "tired"
+    assert search_party[0].id == tired_es[0].id
