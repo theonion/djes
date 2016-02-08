@@ -1,7 +1,11 @@
-from django.core import management
 import pytest
+
+from django.core import management
+
+from elasticsearch_dsl import filter as es_filter
 from model_mommy import mommy
 
+from djes.search import SearchParty
 from example.app.models import SimpleObject, ManualMappingObject, Tag
 
 
@@ -71,3 +75,31 @@ def test_full_search(es_client):
 
     for obj in SimpleObject.search_objects.search().full():
         assert isinstance(obj, SimpleObject)
+
+
+@pytest.mark.django_db
+def test_search_party(es_client):
+    management.call_command("sync_es")
+
+    mommy.make(SimpleObject, baz="tired", _quantity=5)
+    mommy.make(SimpleObject, baz="awake", _quantity=5)
+    SimpleObject.search_objects.refresh()
+
+    tired_es = SimpleObject.search_objects.search().filter(
+        es_filter.Term(baz="tired")
+    ).sort(
+        "id"
+    )
+    awake_es = SimpleObject.search_objects.search().filter(
+        es_filter.Term(baz="awake")
+    ).sort(
+        "id"
+    )
+    assert tired_es.count() == 5
+    assert awake_es.count() == 5
+
+    search_party = SearchParty()
+    search_party.register_search(tired_es, primary=True)
+    search_party.register_search(awake_es, search_range=(0, 1))
+
+    import pdb; pdb.set_trace()

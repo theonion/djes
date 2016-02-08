@@ -104,16 +104,42 @@ class LazySearch(Search):
 
 class SearchParty(object):
     """
-    Generator™ for multiple searches that allows for searches to iterate through the results of
+    Generator for multiple searches that allows for searches to iterate through the results of
     multiple queries, while providing explicit logic for indexing.
     """
     def __init__(self, *args, **kwargs):
+        self.results = []
         self.searches = {}
         self.primary_search = None
 
+    def __getitem__(self, n):
+        if n + 1 == len(self.results):
+            return self.results[n]
+        search = self.get_search(n)
+        self.results.append(self.get_result(search))
+        return self.results[n]
+
+    def get_search(self, n):
+        for search, config in self.searches.items():
+            search_ranges = config.get("ranges")
+            if search_ranges:
+                for search_range in search_ranges:
+                    if not search_range:
+                        continue
+                    elif n >= search_range[0] and n < search_range[1]:
+                        return search
+        return self.primary_search
+
+    def get_result(self, search):
+        count = self.searches[search]["count"]
+        result = search[count]
+        self.searches[search]["count"] += 1
+        return result
+
     def register_search(self, search, search_range=None, primary=False):
-        if primary:
+        if primary or self.primary_search is None:
             self.primary_search = search
+            self.searches[search] = {"ranges": None, "count": 0}
         else:
             if type(search_range) is list:
                 for srange in search_range:
@@ -121,7 +147,7 @@ class SearchParty(object):
             else:
                 self.validate_range(search_range)
                 search_range = [search_range]
-            self.searches[search] = {"ranges": search_range}
+            self.searches[search] = {"ranges": search_range, "count": 0}
 
     def validate_range(self, search_range):
         if search_range is None:
