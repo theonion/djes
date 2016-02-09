@@ -61,6 +61,9 @@ class LazySearch(Search):
             return min(self._extra['size'], self.count())
         return self.count()
 
+    def __next__(self):
+        return self.next()
+
     def next(self):
         # Tracks index on the search object so we can iterate across multiple queries.
         start, end = self.position, self.position + 1

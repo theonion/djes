@@ -3,6 +3,7 @@ import pytest
 from django.core import management
 
 from model_mommy import mommy
+import six
 
 from example.app.models import SimpleObject, ManualMappingObject, Tag
 
@@ -74,6 +75,7 @@ def test_full_search(es_client):
     for obj in SimpleObject.search_objects.search().full():
         assert isinstance(obj, SimpleObject)
 
+
 @pytest.mark.django_db
 def test_search_next_generator(es_client):
     management.call_command("sync_es")
@@ -85,4 +87,4 @@ def test_search_next_generator(es_client):
     search = SimpleObject.search_objects.search()
     for item in search:
         assert item
-        assert item == next(search)
+        assert item == six.next(search)
