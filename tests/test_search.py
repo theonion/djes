@@ -2,6 +2,7 @@ import pytest
 
 from django.core import management
 
+from elasticsearch_dsl import filter as es_filter
 from model_mommy import mommy
 import six
 
@@ -88,3 +89,11 @@ def test_search_next_generator(es_client):
     for item in search:
         assert item
         assert item == six.next(search)
+
+    search = SimpleObject.search_objects.search().filter(
+        es_filter.Terms(**{"baz": ["tired", "awake"]})
+    )
+    search_results = []
+    for i in range(search.count()):
+        search_results.append(six.next(search))
+    assert len(search_results) == 20

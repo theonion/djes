@@ -74,6 +74,7 @@ class LazySearch(Search):
             raise StopIteration
 
     def __getitem__(self, n):
+        # TODO: Investigate a better way to iterate through the entire result set.
         if isinstance(n, int):
             return self.execute()[n]
 
