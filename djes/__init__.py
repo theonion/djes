@@ -1,5 +1,5 @@
 import djes.signals  # noqa
 
-__version__ = "0.1.103"
+__version__ = "0.1.104"
 
 default_app_config = "djes.apps.DJESConfig"
