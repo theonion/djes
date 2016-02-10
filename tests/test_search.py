@@ -1,6 +1,10 @@
-from django.core import management
 import pytest
+
+from django.core import management
+
+from elasticsearch_dsl import filter as es_filter
 from model_mommy import mommy
+import six
 
 from example.app.models import SimpleObject, ManualMappingObject, Tag
 
@@ -71,3 +75,25 @@ def test_full_search(es_client):
 
     for obj in SimpleObject.search_objects.search().full():
         assert isinstance(obj, SimpleObject)
+
+
+@pytest.mark.django_db
+def test_search_next_generator(es_client):
+    management.call_command("sync_es")
+
+    mommy.make(SimpleObject, baz="tired", _quantity=10)
+    mommy.make(SimpleObject, baz="awake", _quantity=10)
+    SimpleObject.search_objects.refresh()
+
+    search = SimpleObject.search_objects.search()
+    for item in search:
+        assert item
+        assert item == six.next(search)
+
+    search = SimpleObject.search_objects.search().filter(
+        es_filter.Terms(**{"baz": ["tired", "awake"]})
+    )
+    search_results = []
+    for i in range(search.count()):
+        search_results.append(six.next(search))
+    assert len(search_results) == 20

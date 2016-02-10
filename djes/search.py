@@ -52,12 +52,29 @@ class FullResponse(Response):
 class LazySearch(Search):
     """This extends the base Search object, allowing for Django-like lazy execution"""
 
+    def __init__(self, *args, **kwargs):
+        super(LazySearch, self).__init__(*args, **kwargs)
+        self.position = kwargs.get("from", 0)
+
     def __len__(self):
         if 'size' in self._extra:
             return min(self._extra['size'], self.count())
         return self.count()
 
+    def __next__(self):
+        return self.next()
+
+    def next(self):
+        # Tracks index on the search object so we can iterate across multiple queries.
+        start, end = self.position, self.position + 1
+        self.position += 1
+        try:
+            return self[start:end][0]
+        except IndexError:
+            raise StopIteration
+
     def __getitem__(self, n):
+        # TODO: Investigate a better way to iterate through the entire result set.
         if isinstance(n, int):
             return self.execute()[n]
 
