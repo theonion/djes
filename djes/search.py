@@ -70,7 +70,7 @@ class LazySearch(Search):
         size = self._extra.get("size", 10)
         from_ = self.position
         self.position += 1
-        if from_ + 1 > len(self._results):
+        if from_ >= len(self._results):
             try:
                 self._results += list(self.extra(from_=from_, size=size))
             except IndexError:
