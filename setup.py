@@ -30,7 +30,7 @@ dev_requires = [
 ]
 
 install_requires = [
-    "elasticsearch-dsl==0.0.4",
+    "elasticsearch-dsl==0.0.9",
     "django>=1.8,<1.9"
 ]
 
