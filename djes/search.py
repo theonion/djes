@@ -77,10 +77,10 @@ class LazySearch(Search):
                 self._results += list(self.extra(from_=from_, size=size))
             except IndexError:
                 raise StopIteration
-        if len(self._results) < from_:
-            raise StopIteration
-        else:
+        try:
             return self._results[from_]
+        except IndexError:
+            raise StopIteration
 
     def __getitem__(self, n):
         # TODO: Investigate a better way to iterate through the entire result set.
