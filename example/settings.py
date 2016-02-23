@@ -1,3 +1,5 @@
+import os
+
 
 DATABASES = {
     "default": {
@@ -18,6 +20,12 @@ MIDDLEWARE_CLASSES = (
     "django.middleware.csrf.CsrfViewMiddleware"
 )
 
+ES_CONNECTIONS = {
+    "default": {
+        "hosts": ['{}'.format(os.environ.get('ELASTICSEARCH_HOST', 'localhost'))]
+    }
+}
+
 ES_INDEX = "djes-example"
 ES_INDEX_SETTINGS = {
     "djes-example": {
@@ -37,7 +45,7 @@ ES_INDEX_SETTINGS = {
                         "tokenizer": "standard",
                         "filter": [
                             "lowercase",
-                            "autocomplete_filter" 
+                            "autocomplete_filter"
                         ]
                     }
                 }
