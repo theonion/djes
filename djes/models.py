@@ -141,6 +141,8 @@ class Indexable(models.Model):
         super(Indexable, self).save(*args, **kwargs)
         if index:
             self.index()
+        else:
+            self.delete_index(ignore=[404])
 
     def to_dict(self):
         """Get a dictionary representation of this item, formatted for Elasticsearch"""

@@ -2,6 +2,9 @@
 
 ## Development
 
+## Version 0.1.109
+
+- `Indexable.save` calls `delete_index` when `index=False` (mirrors `index()` behavior).
 - Added python 3.5 testing support
 
 ## Version 0.1.108

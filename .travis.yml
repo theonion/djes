@@ -8,6 +8,9 @@ services:
 install:
   - travis_retry pip install -e .
   - travis_retry pip install file://$(pwd)#egg=djes[dev]
+before_script:
+  # Wait for ES startup
+  - until curl http://localhost:9200/; do sleep 1; done
 script:
   - py.test --cov djes --cov-report term-missing
 after_success:
