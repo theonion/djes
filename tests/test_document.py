@@ -58,6 +58,7 @@ def test_relatable(es_client):
         }
     }
 
+
 @pytest.mark.django_db
 def test_poly_reference(es_client):
     child_a = PolyChildA.objects.create(slug='slug', number=1)
@@ -123,6 +124,11 @@ def test_save_index():
     assert 1 == SimpleObject.search_objects.search().count()
 
     # Remove From Index
+    content.save(index=False)
+    SimpleObject.search_objects.refresh()
+    assert 0 == SimpleObject.search_objects.search().count()
+
+    # Second save does not trigger 404/not-found-in-index
     content.save(index=False)
     SimpleObject.search_objects.refresh()
     assert 0 == SimpleObject.search_objects.search().count()
