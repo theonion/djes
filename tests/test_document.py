@@ -68,12 +68,12 @@ def test_poly_reference(es_client):
     poly_relationship_a = PolyRelationship.objects.create(poly_parent=parent_a)
     assert poly_relationship_a.to_dict() == {
         'poly_parent': {
-            'text': '', 
-            'slug': 'slug', 
-            'number': 1, 
-            'polyparent_ptr_id': 1, 
+            'text': '',
+            'slug': 'slug',
+            'number': 1,
+            'polyparent_ptr_id': 1,
             'id': 1
-        }, 
+        },
         'id': 1
     }
 
@@ -82,10 +82,10 @@ def test_poly_reference(es_client):
         'poly_parent': {
             'album': 'st.anger',
             'text': '',
-            'band_name': 'metallica', 
-            'id': 2, 
+            'band_name': 'metallica',
+            'id': 2,
             'polyparent_ptr_id': 2
-        }, 
+        },
         'id': 2
     }
 
@@ -111,3 +111,23 @@ def test_many_to_many(es_client):
     # Not for now...
     # assert len(document["dumb_tags"]) == 4
     # assert dumb_tags[0].id in document["dumb_tags"]
+
+
+@pytest.mark.django_db
+def test_save_index():
+
+    content = SimpleObject.objects.create(foo=1)
+
+    # Added to index on create
+    SimpleObject.search_objects.refresh()
+    assert 1 == SimpleObject.search_objects.search().count()
+
+    # Remove From Index
+    content.save(index=False)
+    SimpleObject.search_objects.refresh()
+    assert 0 == SimpleObject.search_objects.search().count()
+
+    # Re-insert into index
+    content.save(index=True)
+    SimpleObject.search_objects.refresh()
+    assert 1 == SimpleObject.search_objects.search().count()
