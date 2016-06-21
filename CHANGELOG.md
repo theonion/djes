@@ -2,6 +2,10 @@
 
 ## Development
 
+## Version 0.1.110
+
+- `shallow_class_factory` defines a generic Mapping wrapper for `_ElasticSearchResult` objects.
+
 ## Version 0.1.109
 
 - `Indexable.save` calls `delete_index` when `index=False` (mirrors `index()` behavior).
