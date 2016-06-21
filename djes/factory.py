@@ -75,7 +75,7 @@ def shallow_class_factory(model):
 
         class ElasticMapping:
             class Meta:
-                elastic = True
+                elastic_abstract = True
                 doc_type = model.search_objects.mapping.doc_type
 
         overrides = {
