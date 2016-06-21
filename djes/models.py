@@ -235,8 +235,8 @@ class Indexable(models.Model):
         """Returns the doc_type of this class and all of its descendants."""
         names = []
         if not exclude_base and hasattr(cls, 'search_objects'):
-            names.append(cls.search_objects.mapping.doc_type)
+            if not getattr(cls.search_objects.mapping, "elastic", False):
+                names.append(cls.search_objects.mapping.doc_type)
         for subclass in cls.__subclasses__():
             names += subclass.get_doc_types()
-            # names.append(subclass.search_objects.mapping.doc_type)
         return names

@@ -111,6 +111,7 @@ def test_many_to_many():
         }
     }
 
+
 def test_reverse_relations():
     assert ReverseRelationsParentObject.search_objects.mapping.to_dict() == {
         "app_reverserelationsparentobject": {
@@ -128,6 +129,7 @@ def test_reverse_relations():
             }
         }
     }
+
 
 def test_get_doc_types():
     assert SimpleObject.get_doc_types() == [

@@ -73,9 +73,16 @@ def shallow_class_factory(model):
             proxy = True
             app_label = model._meta.app_label
 
+        class ElasticMapping:
+            class Meta:
+                elastic = True
+                doc_type = model.search_objects.mapping.doc_type
+
         overrides = {
             "save": None,
             "Meta": Meta,
+            "Mapping": ElasticMapping,
+            "search_objects": model.search_objects.__class__(),
             "__module__": model.__module__,
             "_deferred": True,
         }
@@ -96,5 +103,4 @@ def shallow_class_factory(model):
                 if isinstance(dj_field, models.ForeignKey):
                     # Let's add a fake foreignkey attribute
                     overrides[attname] = ElasticSearchForeignKey(attname, dj_field.rel.to)
-
         return type(str(name), (model,), overrides)
